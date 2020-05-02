@@ -1,8 +1,14 @@
-const fastify = require('fastify')({ logger: true })
+const fastify = require('fastify')({ logger: true });
+const userModule = new (require('./modules/user/user.module.js'))();
 
 fastify.get('/*', async (request, reply) => {
     return { hello: 'dima' }
-})
+});
+
+fastify.get('/user', async (request, reply) => {
+    return userModule.loginUser(request.query.name, request.query.pass)
+});
+
 
 // Run the server!
 const start = async () => {
@@ -14,4 +20,7 @@ const start = async () => {
         process.exit(1)
     }
 };
+
+
+
 start();
