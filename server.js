@@ -3,9 +3,9 @@ const fastify = require('fastify')({ logger: true });
 const mysqlConnection = require("./db_connection");
 const userModule = new (require('./modules/user/user.module.js'))();
 
-// fastify.register(require('fastify-cors'), {//uncomment for debug purposes only
-//     // put your options here
-// });
+fastify.register(require('fastify-cors'), {//uncomment for debug purposes only
+    // put your options here
+});
 
 fastify.get('/*', async (request, reply) => {
     return { hello: 'dima' }
