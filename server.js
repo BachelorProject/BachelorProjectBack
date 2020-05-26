@@ -1,27 +1,14 @@
 require('dotenv').config();
+const config = require('./config/config');
 const fastify = require('fastify')({ logger: true });
-const mysqlConnection = require("./db_connection");
-const userModule = new (require('./modules/user/user.module.js'))();
 
 
-fastify.get('/*', async (request, reply) => {
-    return { hello: 'dima' }
-});
+fastify.register(require('fastify-jwt'), { secret: config.JWT_SECRET });
+fastify.register(require('fastify-auth'));
 
-fastify.get('/user', async (request, reply) => {
-    return userModule.loginUser(request.query.name, request.query.pass)
-});
 
-fastify.get('/users', async (request, reply) => {
-    mysqlConnection.query("select * from app_users;", (err,rows,fields) =>{
-        if(!err){
-            reply.send(rows);
-            console.log((rows));
-        }else{
-            console.log(err);
-        }
-    });
-});
+fastify.register(require('./routes/users'));
+
 
 // Run the server!
 const start = async () => {
