@@ -16,6 +16,16 @@ let modelDefinition = {
         allowNull: true
     },
 
+    first_name: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
+
+    last_name: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
+
     facebook_id: {
         type: Sequelize.STRING,
         unique: true,

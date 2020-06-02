@@ -18,9 +18,3 @@ config.db.details = {
 
 config.JWT_SECRET = process.env.JWT_SECRET;
 
-config.FB_ID = process.env.FB_ID;
-config.FB_SERET = process.env.FB_SERET;
-
-config.GOOGLE_ID = process.env.GOOGLE_ID;
-config.GOOGLE_SECRET = process.env.GOOGLE_SECRET;
-

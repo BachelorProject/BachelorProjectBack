@@ -1,9 +1,6 @@
-const Fastify = require('fastify');
+
 const User = require('./../models/user');
 const usersController = require('../controllers/users');
-const sget = require('simple-get');
-const oauthPlugin = require('fastify-oauth2');
-const config = require('./../config/config');
 const {schemas } = require('../helpers/routeHelpers');
 
 function verifyJWTAndUser (request, reply, done) {
@@ -57,65 +54,6 @@ function verifyUserAndPassword (request, reply, done) {
 
 module.exports = function (fastify, opts, next) {
 
-    fastify.register(oauthPlugin, {
-        name: 'facebookOAuth2',
-        credentials: {
-            client: {
-                id: config.FB_ID,
-                secret: config.FB_SERET
-            },
-            auth: oauthPlugin.FACEBOOK_CONFIGURATION
-        },
-        // register a fastify url to start the redirect flow
-        startRedirectPath: '/login/facebook',
-        // facebook redirect here after the user login
-        callbackUri: 'http://localhost:80/login/facebook/callback' //port ??? 3000
-    });
-
-
-    fastify.register(oauthPlugin, {
-        name: 'facebookOAuth2Signup',
-        credentials: {
-            client: {
-                id: config.FB_ID,
-                secret: config.FB_SERET
-            },
-            auth: oauthPlugin.FACEBOOK_CONFIGURATION
-        },
-        // register a fastify url to start the redirect flow
-        startRedirectPath: '/signup/facebook',
-        // facebook redirect here after the user login
-        callbackUri: 'http://localhost:80/signup/facebook/callback' //port ??? 3000
-    });
-
-    fastify.register(oauthPlugin, {
-        name: 'googleOAuth2',
-        scope: ['profile'],
-        credentials: {
-            client: {
-                id: config.GOOGLE_ID,
-                secret: config.GOOGLE_SECRET
-            },
-            auth: oauthPlugin.GOOGLE_CONFIGURATION
-        },
-        startRedirectPath: '/login/google',
-        callbackUri: 'http://localhost:80/login/google/callback'
-    });
-
-    fastify.register(oauthPlugin, {
-        name: 'googleOAuth2Signup',
-        scope: ['profile'],
-        credentials: {
-            client: {
-                id: config.GOOGLE_ID,
-                secret: config.GOOGLE_SECRET
-            },
-            auth: oauthPlugin.GOOGLE_CONFIGURATION
-        },
-        startRedirectPath: '/signup/google',
-        callbackUri: 'http://localhost:80/signup/google/callback'
-    });
-
     fastify.decorate('verifyJWTAndUser', verifyJWTAndUser);
     fastify.decorate('verifyUserAndPassword', verifyUserAndPassword);
 
@@ -125,19 +63,30 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'POST',
-        schema: schemas.authSchema,
-        url: '/signup',
+        // schema: schemas.authSchema,
+        url: '/api/signup',
         handler: usersController.signUp
     });
 
     fastify.route({
         method: 'POST',
         schema: schemas.authSchema,
-        url: '/signin',
+        url: '/api/signin',
         preHandler: fastify.auth([fastify.verifyUserAndPassword]),
         handler: usersController.signIn
     });
 
+    fastify.route({
+        method: 'POST',
+        url: '/api/signin/facebook',
+        handler: usersController.signInFacebook
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/signin/google',
+        handler: usersController.signInGoogle
+    });
 
     fastify.route({
         method: 'GET',
@@ -170,107 +119,6 @@ module.exports = function (fastify, opts, next) {
             req.log.info('Auth route')
             reply.send({ hello: 'world' })
         }
-    });
-
-    fastify.get('/login/facebook/callback', function (request, reply) {
-        this.facebookOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, (err, result) => {
-            if (err) {
-                reply.send(err)
-                return
-            }
-
-            sget.concat({
-                url: 'https://graph.facebook.com/v6.0/me',
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + result.access_token
-                },
-                json: true
-            }, function (err, res, data) {
-                if (err) {
-                    reply.send(err)
-                    return
-                }
-                usersController.signInFacebook(data,reply);
-            })
-        })
-    });
-
-    fastify.get('/signup/facebook/callback', function (request, reply) {
-        this.facebookOAuth2Signup.getAccessTokenFromAuthorizationCodeFlow(request, (err, result) => {
-            if (err) {
-                reply.send(err)
-                return
-            }
-
-            sget.concat({
-                url: 'https://graph.facebook.com/v6.0/me',
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + result.access_token
-                },
-                json: true
-            }, function (err, res, data) {
-                if (err) {
-                    reply.send(err)
-                    return
-                }
-                usersController.signUpFacebook(data,reply);
-            })
-        })
-    });
-
-    fastify.get('/login/google/callback', function (request, reply) {
-        this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, (err, result) => {
-            console.log('here');
-            if (err) {
-                reply.send(err)
-                return
-            }
-
-            sget.concat({
-                url: 'https://www.googleapis.com/plus/v1/people/me',
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + result.access_token
-                },
-                json: true
-            }, function (err, res, data) {
-                console.log('here',err, res, data);
-
-                if (err) {
-                    reply.send(err)
-                    return
-                }
-                usersController.signInGoogle(data,reply);
-            })
-        })
-    });
-
-    fastify.get('/signup/google/callback', function (request, reply) {
-        this.googleOAuth2Signup.getAccessTokenFromAuthorizationCodeFlow(request, (err, result) => {
-            console.log('here');
-            if (err) {
-                reply.send(err)
-                return
-            }
-
-            sget.concat({
-                url: 'https://www.googleapis.com/plus/v1/people/me',
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + result.access_token
-                },
-                json: true
-            }, function (err, res, data) {
-                console.log('here',err, res, data);
-                if (err) {
-                    reply.send(err)
-                    return
-                }
-                usersController.signUpGoogle(data,reply);
-            })
-        })
     });
 
     next();

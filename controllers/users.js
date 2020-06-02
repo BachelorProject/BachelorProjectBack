@@ -22,19 +22,17 @@ module.exports = {
     signUp:  (request, reply)  => {
         console.log('signup!!!!!!!!!!!!!!!!!');
         db.sync().then(function() {
-            console.log('in sync');
             let newUser = {
                 email: request.body.email,
                 password: request.body.password
             };
             // check email/ google / fb
             User.findOne({where: {email: newUser.email}}).then(function(user) {
-                console.log(user);
                 if (!user) {
                     User.create(newUser).then(function(result) {
                         user = result.dataValues;
                         let token = signToken(user);
-                        reply.send({message: 'Account created!', email: user.email, password: user.password, token: token});
+                        reply.send({ success: true, token: token, new_user: true});
                     });
                 } else {
                     reply.code(403);
@@ -68,7 +66,7 @@ module.exports = {
                 user.comparePasswords(password, function(error, isMatch) {
                     if(isMatch && !error) {
                         let token = signToken(user);
-                        reply.send({ success: true, token: token});
+                        reply.send({ success: true, token: token, new_user: false});
                     } else {
                         reply.code(404);
                         reply.send({ message: 'Authentication failed!' });
@@ -83,55 +81,32 @@ module.exports = {
 
     },
 
-    signInGoogle:  (data, reply) => {
+    signInGoogle:  (request, reply) => {
         console.log('googleOAuth!!!!!!!!!!!!!!!!!');
-
-        const id = data.id;
-        if(!id) {
+        let data = request.body;
+        let newUser = {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            google_id:data.google_id,
+            google_email: data.google_email
+            // photo_url: r.photoUrl ???
+        };
+        if(!newUser.google_id) {
             reply.code(404);
             return reply.send({ message: 'id needed' });
         }
-
-        User.findOne({ where: { google_id: request.body.id } }).then(function(user) {
-            if(!user) {
-                reply.code(404);
-                reply.send({ message: 'Authentication failed!' });
-            } else {
-                let token = signToken(user);
-                reply.send({ success: true, token: token});
-            }
-        }).catch(function(error) {
-            console.log('error in catch', error);
-            reply.code(500);
-            reply.send({ message: 'There was an error!' });
-        });
-    },
-    signUpGoogle:  (data, reply)  => {
-        console.log('signUpFacebook!!!!!!!!!!!!!!!!!');
-
-        const id = data.id;
-        const email = data.email;
-        if(!id ) {
-            reply.code(404);
-            return reply.send({ message: 'id needed, name needed' });
-        }
-
-        let newUser = {
-            google_id: id,
-            google_email:  email
-        };
-
-        User.findOne({ where: { google_id: id } }).then(function(user) {
+        User.findOne({ where: { google_id: newUser.google_id } }).then(function(user) {
             if(!user) {
                 User.create(newUser).then(function(result) {
                     user = result.dataValues;
                     let token = signToken(user);
-                    reply.send({message: 'Account created!', email: user.email, password: user.password, token: token});
+                    reply.send({ success: true, token: token, new_user: true });
                 });
-            } else {
-                reply.code(403);
-                reply.send({message: 'User already exists'});
+            }else{
+                let token = signToken(user);
+                reply.send({ success: true, token: token, new_user: false });
             }
+
         }).catch(function(error) {
             console.log('error in catch', error);
             reply.code(500);
@@ -139,60 +114,38 @@ module.exports = {
         });
     },
 
-    signInFacebook:(data, reply) => {
+    signInFacebook:(request, reply) => {
         console.log('facebookOAuth!!!!!!!!!!!!!!!!!');
+        let data = request.body;
         console.log(data);
-        const id = data.id;
-        if(!id) {
-            reply.code(404);
-            return reply.send({ message: 'id needed' });
-        }
 
-        User.findOne({ where: { facebook_id: id } }).then(function(user) {
-            if(!user) {
-                reply.code(404);
-                reply.send({ message: 'Authentication failed!' });
-            } else {
-                let token = signToken(user);
-                reply.send({ success: true, token: token});
-            }
-        }).catch(function(error) {
-            console.log('error in catch', error);
-            reply.code(500);
-            reply.send({ message: 'There was an error!' });
-        });
-    },
-
-    signUpFacebook:  (data, reply)  => {
-        console.log('signUpFacebook!!!!!!!!!!!!!!!!!');
-        const id = data.id;
-        const name = data.name;
-        if(!id ) {
+        let newUser = {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            facebook_id:data.facebook_id,
+            facebook_name:data.facebook_name,
+            facebook_email: data.facebook_email
+        };
+        if(!newUser.facebook_id ) {
             reply.code(404);
             return reply.send({ message: 'id needed, name needed' });
         }
-
-        let newUser = {
-            facebook_id: id,
-            facebook_name:  name
-        };
-
-        User.findOne({ where: { facebook_id: id } }).then(function(user) {
+        let new_user = false;
+        User.findOne({ where: { facebook_id: newUser.facebook_id } }).then(function(user) {
             if(!user) {
                 User.create(newUser).then(function(result) {
                     user = result.dataValues;
                     let token = signToken(user);
-                    reply.send({message: 'Account created!', email: user.email, password: user.password, token: token});
+                    reply.send({ success: true, token: token, new_user: true });
                 });
-            } else {
-                reply.code(403);
-                reply.send({message: 'User already exists'});
+            }else{
+                let token = signToken(user);
+                reply.send({ success: true, token: token, new_user: false });
             }
         }).catch(function(error) {
             console.log('error in catch', error);
             reply.code(500);
             reply.send({ message: 'There was an error!' });
         });
-    },
-
+    }
 };

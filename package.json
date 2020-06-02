@@ -10,7 +10,6 @@
     "fastify-auth": "^0.7.2",
     "fastify-cors": "^3.0.3",
     "fastify-jwt": "^1.4.0",
-    "fastify-oauth2": "^3.3.0",
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
     "mysql2": "^2.1.0",
