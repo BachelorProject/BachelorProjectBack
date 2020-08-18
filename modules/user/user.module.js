@@ -2,7 +2,7 @@ class UserModule {
 
     loginUser(username, password) {
         return {username: username,
-        password: password}
+            password: password}
     }
 
 }
