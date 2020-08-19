@@ -4,10 +4,10 @@ const usersController = require('../controllers/users');
 const {schemas } = require('../helpers/routeHelpers');
 
 function verifyJWTAndUser (request, reply, done) {
-    const jwt = this.jwt
+    const jwt = this.jwt;
 
     if (request.body && request.body.failureWithReply) {
-        reply.code(401).send({ error: 'Unauthorized' })
+        reply.code(401).send({ error: 'Unauthorized' });
         return done(new Error())
     }
 
@@ -15,7 +15,7 @@ function verifyJWTAndUser (request, reply, done) {
         return done(new Error('Missing token header'))
     }
 
-    jwt.verify(request.raw.headers.authorization, onVerify)
+    jwt.verify(request.raw.headers.authorization, onVerify);
 
     function onVerify (err, decoded) {
         console.log(err);
@@ -38,7 +38,7 @@ function verifyJWTAndUser (request, reply, done) {
 
         }).catch(function(error) {
              console.log('in sync err');
-             console.log(error)
+             console.log(error);
              reply.send({ message: 'SQl ERROR' });
          });
     }
@@ -57,7 +57,7 @@ module.exports = function (fastify, opts, next) {
     fastify.decorate('verifyJWTAndUser', verifyJWTAndUser);
     fastify.decorate('verifyUserAndPassword', verifyUserAndPassword);
 
-    fastify.get('/*', async (request, reply) => {
+    fastify.get('/*', async () => {
         return { hello: 'dima' }
     });
 
@@ -84,6 +84,13 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'POST',
+        url: '/api/change_password',
+        handler: usersController.changePassword
+    });
+
+
+    fastify.route({
+        method: 'POST',
         url: '/api/signin/google',
         handler: usersController.signInGoogle
     });
@@ -92,7 +99,7 @@ module.exports = function (fastify, opts, next) {
         method: 'GET',
         url: '/no-auth',
         handler: (req, reply) => {
-            req.log.info('Auth free route')
+            req.log.info('Auth free route');
             reply.send({ hello: 'world' })
         }
     });
@@ -102,7 +109,7 @@ module.exports = function (fastify, opts, next) {
         url: '/auth',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: (req, reply) => {
-            req.log.info('Auth route')
+            req.log.info('Auth route');
             reply.send({ hello: req.user })
         }
     });
@@ -116,7 +123,7 @@ module.exports = function (fastify, opts, next) {
             fastify.verifyUserAndPassword
         ]),
         handler: (req, reply) => {
-            req.log.info('Auth route')
+            req.log.info('Auth route');
             reply.send({ hello: 'world' })
         }
     });
