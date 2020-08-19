@@ -3,6 +3,7 @@ let db = require('./../db_connection'),
 
 const JWT = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/config');
+const mail = require('./../modules/mailsender/sender');
 
 signToken = user => {
     return JWT.sign({
@@ -187,5 +188,41 @@ module.exports = {
             reply.code(500);
             reply.send({ message: 'There was an error!' });
         });
-    }
+    },
+
+    recoverPasswordByEmail:  (request, reply)  => {
+        console.log('recoverPasswordByEmail!!!!!!!!!!!!!!!!!');
+
+        if(!request.body.email) {
+            reply.code(404);
+            return reply.send({ message: 'Email is needed' });
+        }
+
+        User.findOne({ where: { email: request.body.email } }).then(function(user) {
+            if(!user) {
+                reply.code(404);
+                reply.send({ message: 'Email not found!' });
+            } else {
+                let token = signTokenForPasswordChange(user);
+                // reply.send({ success: true, token: token, new_user: false});
+
+                mail.send(user.email, "password change",
+                    "follow link to change password: \n" +
+                    'http://localhost:4200/?recoverEmail=' +user.email +
+                    '&recoverToken=' + token,
+                    () => {
+                        reply.send({ success: true});
+                    },
+                    () => {
+                        reply.code(404);
+                        reply.send({ message: 'Error! try again later' });
+                    }) //example
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500);
+            reply.send({ message: 'There was an error!' });
+        });
+
+    },
 };

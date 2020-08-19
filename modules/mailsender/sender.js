@@ -1,17 +1,18 @@
 const mailSender = require('gmail-send');
+const config = require('./../../config/config');
 
 class MailSender {
 
-    getSender(to, subject) {
+    static getSender(to, subject) {
         return mailSender({
-            user: this.user,
-            pass: this.pass,
+            user: config.EMAIL_USER,
+            pass: config.EMAIL_PASSWORD,
             to: to,
             subject: subject,
         });
     }
 
-    send(to, subject, text, onSuccess, onError) {
+    static send(to, subject, text, onSuccess, onError) {
         this.getSender(to, subject)({
             text: text
         }, (error, result, fullResult) => {

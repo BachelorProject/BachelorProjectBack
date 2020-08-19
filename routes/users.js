@@ -88,6 +88,11 @@ module.exports = function (fastify, opts, next) {
         handler: usersController.changePassword
     });
 
+    fastify.route({
+        method: 'POST',
+        url: '/api/recover_password_by_email',
+        handler: usersController.recoverPasswordByEmail
+    });
 
     fastify.route({
         method: 'POST',

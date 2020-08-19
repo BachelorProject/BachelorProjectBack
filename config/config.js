@@ -18,3 +18,5 @@ config.db.details = {
 
 config.JWT_SECRET = process.env.JWT_SECRET;
 
+config.EMAIL_USER = process.env.EMAIL_USER;
+config.EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
