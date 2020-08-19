@@ -198,4 +198,4 @@ modules.xml
 
 .idea
 
-.env
+package-lock.json
