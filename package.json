@@ -4,11 +4,18 @@
   "description": "",
   "main": "server.js",
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "dotenv": "^8.2.0",
     "fastify": "^2.14.1",
+    "fastify-auth": "^0.7.2",
     "fastify-cors": "^3.0.3",
-    "gmail-send": "^1.8.10",
-    "mysql": "^2.18.1"
+    "fastify-jwt": "^1.4.0",
+    "jsonwebtoken": "^8.5.1",
+    "mysql": "^2.18.1",
+    "mysql2": "^2.1.0",
+    "sequelize": "^5.21.10",
+    "simple-get": "^4.0.0",
+    "gmail-send": "^1.8.10"
   },
   "devDependencies": {},
   "scripts": {

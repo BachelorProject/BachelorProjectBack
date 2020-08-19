@@ -1,12 +1,11 @@
-const { createPool } = require("mysql");
+'use strict';
 
-const pool = createPool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    connectionLimit: 10
-});
+var config = require('./config/config'),
+    Sequelize = require('sequelize');
 
-module.exports = pool;
+module.exports = new Sequelize(
+    config.db.database,
+    config.db.user,
+    config.db.password,
+    config.db.details
+);
