@@ -19,7 +19,7 @@ signTokenForPasswordChange = user => {
         iss: 'mari',
         sub: user.id,
         iat: new Date().getTime(), // current time
-        exp: new Date().setDate(new Date().getTime() + 10 * 60000) // current time + 1 day ahead
+        exp: new Date().setTime(new Date().getTime() + 10 * 60000) // current time + 10min day ahead
     }, JWT_SECRET);
 };
 

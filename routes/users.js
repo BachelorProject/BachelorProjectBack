@@ -18,15 +18,16 @@ function verifyJWTAndUser (request, reply, done) {
     jwt.verify(request.raw.headers.authorization, onVerify);
 
     function onVerify (err, decoded) {
-        console.log(err);
-        console.log(decoded);
-        if (err || !decoded.exp || !decoded.sub) {
+        if (err){
+            return  done(err);
+        }
+        if (!decoded || !decoded.exp || !decoded.sub) {
             return done(new Error('Token not valid'))
         }
-
         if (decoded.exp  < new Date().getTime()){
             return done(new Error('Token expired'))
         }
+
          User.findOne({where: {id: decoded.sub}}).then(function(user) {
             // If user doesn't exists, handle it
             if (!user) {
@@ -85,6 +86,7 @@ module.exports = function (fastify, opts, next) {
     fastify.route({
         method: 'POST',
         url: '/api/change_password',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: usersController.changePassword
     });
 
