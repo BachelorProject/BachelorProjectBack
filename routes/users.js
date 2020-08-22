@@ -1,6 +1,7 @@
 
 const User = require('./../models/user');
 const usersController = require('../controllers/users');
+const contestController =  require('../controllers/contest');
 const {schemas } = require('../helpers/routeHelpers');
 
 function verifyJWTAndUser (request, reply, done) {
@@ -100,6 +101,20 @@ module.exports = function (fastify, opts, next) {
         method: 'POST',
         url: '/api/signin/google',
         handler: usersController.signInGoogle
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/create_contest',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.createContest
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/get_contests',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getContests
     });
 
     fastify.route({

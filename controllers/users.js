@@ -49,7 +49,7 @@ module.exports = {
                         reply.send({ success: true, token: token, new_user: true});
                     });
                 } else {
-                    reply.code(403);
+                    reply.code(403); //// ????
                     reply.send({message: 'User already exists'});
                 }
             });
