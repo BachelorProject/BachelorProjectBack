@@ -1,9 +1,7 @@
 let Contest = require('./../models/contest');
 let Round = require('./../models/round');
 let Subject = require('./../models/subject');
-let User = require('./../models/user');
 let ContestRegisteredUser = require('./../models/contest_registered_user');
-let ContestSubject = require('./../models/contest_subject');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -38,12 +36,13 @@ module.exports = {
 
     getContests: async (request, reply) => {
         console.log('getContests --------');
-        let createdByMe = request.body.created_by_me;
-        let registrationIsOn = request.body.registration_is_on;
-        let subjects = request.body.subjects;
-        let limit = request.body.limit;
-        let page = request.body.page;
-        let searchString = request.body.search_string;
+        let createdByMe = request.query.myContests;
+        let registrationIsOff = request.query.pastContests;
+        let subjects = request.query.subjectIds;
+        let limit = request.query.to - request.query.from;
+        let from = parseInt(request.query.from);
+        let searchString = request.query.searchString;
+
         if (!searchString) {
             searchString = '';
         }
@@ -68,10 +67,10 @@ module.exports = {
             ],
             // attributes: ['contests.*', 'contestRegisteredUsers.*', [Sequelize.fn('COUNT', 'contestRegisteredUsers.userId'), 'userCount']],
             limit: limit,
-            offset: (page - 1) * limit,
+            offset: from,
         };
 
-        if (registrationIsOn === 'true') {
+        if (registrationIsOff === 'false') {
             options.where.status = ['N' , 'P']; // TODO statuses
         }else{
             options.where.status = {
@@ -79,7 +78,7 @@ module.exports = {
             };
         }
         if (createdByMe === 'true'){
-            options.where.CreateUserId = request.user.dataValues.id; // TODO set userId or user to all authed methods
+            options.where.CreateUserId = request.user.dataValues.id;
         }
 
         if (subjects){
@@ -90,6 +89,8 @@ module.exports = {
         let contestsInfo = [];
         let subjectsDict = {};
         let countsDict = {};
+        // status : ['A', 'C']
+        let roundsDict = {};
 
         // find general contest info
         Contest.findAll(options).then(function(contests){
@@ -101,8 +102,8 @@ module.exports = {
                     title: contests[i].title,
                     body: contests[i].description,
                     imageUrl: 'https://www.pngitem.com/pimgs/m/21-211363_slendytubbies-3-skin-url-hd-png-download.png', //TODO pictures
-                    registrationEnd: contests[i].registrationEnd, // TODO to long -- > .getTime(),
-                    nextContestStart: null, //todo
+                    registrationEnd: new Date(contests[i].registrationEnd).getTime(),
+                    nextContestStart: null,
                     nextContestDuration: null, //todo
                     subjects: [],
                     registeredCount: null
@@ -114,9 +115,12 @@ module.exports = {
             ContestRegisteredUser.findAll({
                 group: ['contestId'],
                 attributes: ['contestId', [Sequelize.fn('COUNT', 'contestId'), 'UserCount']],
+                where: {
+                    contestId : contestIds
+                }
             }).then(function(count){
                 for (let i = 0; i < count.length; i++) {
-                    let el = count[i].toJSON()
+                    let el = count[i].toJSON();
                     countsDict[el.contestId] = el.UserCount;
                 }
 
@@ -143,31 +147,77 @@ module.exports = {
                         }
                     }
 
-                    for (let i = 0; i < contestsInfo.length; i++) {
-                        if (countsDict[contestsInfo[i].id]){
-                            contestsInfo[i].registeredCount = countsDict[contestsInfo[i].id];
-                        } else{
-                            contestsInfo[i].registeredCount = 0;
-                        }
-                        if (subjectsDict[contestsInfo[i].id]){
-                            contestsInfo[i].subjects = subjectsDict[contestsInfo[i].id];
-                        } else{
-                            contestsInfo[i].subjects = [];
-                        }
-                    }
-                    reply.send({error:false, message: 'contests list', contestsInfo: contestsInfo});
+                    Round.findAll({
+                        where: {
+                            contestId: contestIds,
+                            status : ['A', 'C']
+                        },
+                    }).then(function(rounds) {
 
+                        for (let i = 0; i < rounds.length; i++) {
+                            let contestId = rounds[i].contestId;
+                            if(!roundsDict[contestId]){
+                                roundsDict[contestId] = {'A': {}, 'C': {}};
+                            }
+                            roundsDict[contestId][rounds[i].status][rounds[i].roundNo] = {
+                                duration: rounds[i].duration,
+                                startTime: rounds[i].startTime,
+                            }
+                        }
+
+                        let keys = Object.keys(roundsDict);
+                        for (let i = 0; i < keys.length; i++) {
+                            let contestId = keys[i];
+                            let rs;
+                            if(Object.keys(roundsDict[contestId]['A']).length !== 0){
+                                rs = roundsDict[contestId]['A'];
+                                let roundNos = Array.from( Object.keys(rs));
+                                let roundNo = Math.min.apply(null,roundNos);
+                                roundsDict[contestId] = roundsDict[contestId]['A'][roundNo];
+                            }else if(roundsDict[contestId]['C']){
+                                rs = roundsDict[contestId]['C'];
+                                let roundNos = Array.from( Object.keys(rs));
+                                let roundNo = Math.max.apply(null,roundNos);
+                                roundsDict[contestId] = roundsDict[contestId]['C'][roundNo];
+                            }
+                        }
+                        // add final data and return
+                        for (let i = 0; i < contestsInfo.length; i++) {
+                            if (countsDict[contestsInfo[i].id]){
+                                contestsInfo[i].registeredCount = countsDict[contestsInfo[i].id];
+                            } else{
+                                contestsInfo[i].registeredCount = 0;
+                            }
+                            if (subjectsDict[contestsInfo[i].id]){
+                                contestsInfo[i].subjects = subjectsDict[contestsInfo[i].id];
+                            } else{
+                                contestsInfo[i].subjects = [];
+                            }
+                            if (roundsDict[contestsInfo[i].id]){
+                                contestsInfo[i].nextContestDuration = roundsDict[contestsInfo[i].id].duration;
+                                contestsInfo[i].nextContestStart = new Date(roundsDict[contestsInfo[i].id].startTime).getTime();
+                            } else{
+                                contestsInfo[i].nextContestDuration = null;
+                                contestsInfo[i].nextContestStart = null;
+                            }
+                        }
+                        reply.send({error:false, message: 'contests list', contestsInfo: contestsInfo });
+
+
+                    }).catch(function(err){
+                        reply.code(500);
+                        reply.send({ message: 'There was an error!' });
+                    });
+
+                }).catch(function(err){
+                    reply.code(500);
+                    reply.send({ message: 'There was an error!' });
                 });
-
+            }).catch(function(err){
+                reply.code(500);
+                reply.send({ message: 'There was an error!' });
             });
-
-
-
-
-
-
         }).catch(function(err){
-            console.log('Oops! something went wrong, : ', err);
             reply.code(500);
             reply.send({ message: 'There was an error!' });
         });

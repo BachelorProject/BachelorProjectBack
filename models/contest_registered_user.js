@@ -13,5 +13,4 @@ let modelOptionsRegisteredUser = {
 };
 
 let ContestRegisteredUser =  db.define('contestRegisteredUser', modelOptionsRegisteredUser, {});
-ContestRegisteredUser.sync();
 module.exports = ContestRegisteredUser;

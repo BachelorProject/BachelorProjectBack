@@ -17,5 +17,4 @@ let modelDefinition = {
 
 let Subject = db.define('subject', modelDefinition, {});
 // Subject.belongsToMany(Contest, {through: ContestSubject});
-Subject.sync();
 module.exports = Subject;

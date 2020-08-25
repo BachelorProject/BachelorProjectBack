@@ -81,4 +81,3 @@ function hashPassword(user) {
 }
 
 module.exports = UserModel;
-UserModel.sync();

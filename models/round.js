@@ -8,7 +8,7 @@ let Question = require('./../models/question');
 let modelDefinition = {
     roundNo: {
         type: Sequelize.INTEGER,
-        unique: true,
+        unique: false,
         allowNull: false
     },
 
@@ -40,6 +40,10 @@ let modelDefinition = {
         type: Sequelize.INTEGER
     },
 
+    duration: {
+        type: Sequelize.INTEGER
+    },
+
     status: {
         type: Sequelize.STRING,
         unique: false,
@@ -54,5 +58,4 @@ let modelDefinition = {
 let Round = db.define('round', modelDefinition, {});
 Round.hasMany(Question);
 Question.belongsTo(Round);
-Round.sync();
 module.exports = Round;

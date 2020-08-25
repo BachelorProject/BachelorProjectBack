@@ -2,7 +2,6 @@
 
 const Sequelize = require('sequelize');
 const db = require('../db_connection');
-let AnswerType = require('./../models/answer_type');
 
 let modelDefinition = {
     answer: {
@@ -29,6 +28,4 @@ let modelDefinition = {
 
 let QuestionAnswer = db.define('questionAnswer', modelDefinition, {});
 // QuestionAnswer.belongsTo(Question);
-QuestionAnswer.hasOne(AnswerType);
-QuestionAnswer.sync();
 module.exports = QuestionAnswer;

@@ -16,5 +16,4 @@ let modelDefinition = {
 };
 
 let AnswerType = db.define('answerType', modelDefinition, {});
-AnswerType.sync();
 module.exports = AnswerType;

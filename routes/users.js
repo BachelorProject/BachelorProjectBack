@@ -2,6 +2,8 @@
 const User = require('./../models/user');
 const usersController = require('../controllers/users');
 const contestController =  require('../controllers/contest');
+const subjectController =  require('../controllers/subject');
+
 const {schemas } = require('../helpers/routeHelpers');
 
 function verifyJWTAndUser (request, reply, done) {
@@ -111,11 +113,19 @@ module.exports = function (fastify, opts, next) {
     });
 
     fastify.route({
-        method: 'POST',
-        url: '/api/get_contests',
+        method: 'GET',
+        url: '/api/tournament/board_list',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: contestController.getContests
     });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/get_subjects',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: subjectController.getSubjects
+    });
+
 
     fastify.route({
         method: 'GET',

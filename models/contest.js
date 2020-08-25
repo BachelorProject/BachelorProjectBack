@@ -41,11 +41,13 @@ let modelOptions = {
     // }
 };
 
-let ContestModel = db.define('contest', modelDefinition, modelOptions);
+let Contest = db.define('contest', modelDefinition, modelOptions);
 
-ContestModel.belongsTo(User, {as: 'createUser'});
-ContestModel.belongsToMany(User, {through: ContestRegisteredUser}); /// ?? add someth
-ContestModel.belongsToMany(Subject, {through: ContestSubject});
-ContestModel.hasMany(Round); /// ???
-ContestModel.sync();
-module.exports = ContestModel;
+Contest.belongsTo(User, {as: 'createUser'});
+Contest.belongsToMany(User, {through: ContestRegisteredUser}); /// ?? add someth
+Contest.belongsToMany(Subject, {through: ContestSubject});
+
+Contest.hasMany(Round); /// ???
+// Round.belongsTo(Contest);
+
+module.exports = Contest;

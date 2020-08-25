@@ -1,6 +1,7 @@
 require('dotenv').config();
 const config = require('./config/config');
 const fastify = require('fastify')({ logger: true });
+require('./models/models_sync');
 
 fastify.register(require('fastify-jwt'), { secret: config.JWT_SECRET });
 fastify.register(require('fastify-auth'));

@@ -30,7 +30,7 @@ let modelDefinition = {
 
 let Question = db.define('question', modelDefinition, {});
 // Question.belongsTo(Round, {as: 'createUser'}); // ??
-Question.hasOne(AnswerType);
+Question.belongsTo(AnswerType);
 Question.hasMany(QuestionAnswer);
-Question.sync();
+// QuestionAnswer.belongsTo(Question);
 module.exports = Question;

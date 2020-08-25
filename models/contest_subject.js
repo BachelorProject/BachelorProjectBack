@@ -14,5 +14,4 @@ let modelOptionsContestSubject = {
 
 
 let ContestSubject =  db.define('contestSubject', modelOptionsContestSubject, {});
-ContestSubject.sync();
 module.exports = ContestSubject;
