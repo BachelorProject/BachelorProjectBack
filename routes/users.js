@@ -116,48 +116,21 @@ module.exports = function (fastify, opts, next) {
         method: 'GET',
         url: '/api/tournament/board_list',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
-        handler: contestController.getContests
+        handler: contestController.getTournamentList
     });
 
     fastify.route({
-        method: 'POST',
-        url: '/api/get_subjects',
+        method: 'GET',
+        url: '/api/tournament/registered_list',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getRegisteredTournamentList
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/api/subjects',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: subjectController.getSubjects
-    });
-
-
-    fastify.route({
-        method: 'GET',
-        url: '/no-auth',
-        handler: (req, reply) => {
-            req.log.info('Auth free route');
-            reply.send({ hello: 'world' })
-        }
-    });
-
-    fastify.route({
-        method: 'GET',
-        url: '/auth',
-        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
-        handler: (req, reply) => {
-            req.log.info('Auth route');
-            reply.send({ hello: req.user })
-        }
-    });
-
-    fastify.route({
-        method: 'POST',
-        url: '/auth-multiple',
-        preHandler: fastify.auth([
-            // Only one of these has to pass
-            fastify.verifyJWTAndUser,
-            fastify.verifyUserAndPassword
-        ]),
-        handler: (req, reply) => {
-            req.log.info('Auth route');
-            reply.send({ hello: 'world' })
-        }
     });
 
     next();
