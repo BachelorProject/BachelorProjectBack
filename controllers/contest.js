@@ -82,14 +82,13 @@ async function getContests (params, reply) {
 
     // find general contest info
     Contest.findAll(options).then(function(contests){
-        console.log(contests);
         let contestIds = [];
         for (let i = 0; i < contests.length; i++) {
             contestsInfo.push({
                 id: contests[i].id,
                 title: contests[i].title,
                 body: contests[i].description,
-                imageUrl: 'https://www.pngitem.com/pimgs/m/21-211363_slendytubbies-3-skin-url-hd-png-download.png', //TODO pictures
+                imageUrl: contests[i].contestPictureUrl,
                 registrationEnd: new Date(contests[i].registrationEnd).getTime(),
                 nextContestStart: null,
                 nextContestDuration: null, //todo
@@ -194,24 +193,20 @@ async function getContests (params, reply) {
 
                     reply.send({error:false, message: 'contests list', contestsInfo: contestsInfo });
 
-                }).catch(function(err){
-                    reply.code(500);
-                    reply.send({ message: 'There was an error!' });
+                }).catch(function(){
+                    reply.code(500).send({ message: 'There was an error!' });
                 });
 
-            }).catch(function(err){
-                reply.code(500);
-                reply.send({ message: 'There was an error!' });
+            }).catch(function(){
+                reply.code(500).send({ message: 'There was an error!' });
             });
 
-        }).catch(function(err){
-            reply.code(500);
-            reply.send({ message: 'There was an error!' });
+        }).catch(function(){
+            reply.code(500).send({ message: 'There was an error!' });
         });
 
-    }).catch(function(err){
-        reply.code(500);
-        reply.send({ message: 'There was an error!' });
+    }).catch(function(){
+        reply.code(500).send({ message: 'There was an error!' });
     });
 }
 
@@ -228,17 +223,14 @@ module.exports = {
                     reply.send({success: true, contest: result});
                 }).catch(function (error) {
                     console.log('error in catch', error);
-                    reply.code(500);
-                    reply.send({message: 'There was an error!'});
+                    reply.code(500).send({message: 'There was an error!'});
                 });
             }else{
-                reply.code(403);
-                reply.send({message: 'contest with same name already exists'});
+                reply.code(403).send({message: 'contest with same name already exists'});
             }
         }).catch(function(err){
             console.log('Oops! something went wrong, : ', err);
-            reply.code(500);
-            reply.send({ message: 'There was an error!' });
+            reply.code(500).send({ message: 'There was an error!' });
         });
     },
 
@@ -268,26 +260,23 @@ module.exports = {
         let userId = request.user.dataValues.id ,
             id = request.body.id;
         if(!userId || !id) {
-            reply.code(404);
-            reply.send({ message: 'contest not found!' });
+            reply.code(404).send({ message: 'contest not found!' });
         }
         Contest.findOne({ where: {
                 createUserId: userId ,
                 id : id
             }}).then(function(contest) {
             if(!contest) {
-                reply.code(404);
-                reply.send({ message: 'contest not found!' });
+                reply.code(404).send({ message: 'contest not found!' });
             } else {
                 contest.contestPictureUrl = request.file_url;
-                Contest.update({contestPictureUrl: request.file_url}, {where : {id: contest.id} }).then(function(user) {
+                Contest.update({contestPictureUrl: request.file_url}, {where : {id: contest.id} }).then(function() {
                     reply.send({ success: true, file_url: request.file_url});
                 });
             }
         }).catch(function(error) {
             console.log('error in catch', error);
-            reply.code(500);
-            reply.send({ message: 'There was an error!' });
+            reply.code(500).send({ message: 'There was an error!' });
         });
 
     },
