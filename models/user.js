@@ -51,6 +51,11 @@ let modelDefinition = {
     google_email: {
         type: Sequelize.STRING,
         allowNull: true
+    },
+
+    profilePictureUrl: {
+        type: Sequelize.TEXT,
+        allowNull: true
     }
 };
 

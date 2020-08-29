@@ -1,4 +1,3 @@
-
 const User = require('./../models/user');
 const usersController = require('../controllers/users');
 const contestController =  require('../controllers/contest');
@@ -56,10 +55,13 @@ function verifyUserAndPassword (request, reply, done) {
     done()
 }
 
-module.exports = function (fastify, opts, next) {
+const multer = require('fastify-multer'); // or import multer from 'fastify-multer'
+const fileController = require('./../controllers/file');
 
+module.exports = function (fastify, opts, next) {
     fastify.decorate('verifyJWTAndUser', verifyJWTAndUser);
     fastify.decorate('verifyUserAndPassword', verifyUserAndPassword);
+    fastify.register(multer.contentParser);
 
     fastify.get('/*', async () => {
         return { hello: 'dima' }
@@ -131,6 +133,20 @@ module.exports = function (fastify, opts, next) {
         url: '/api/subjects',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: subjectController.getSubjects
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/setProfilePicture',
+        preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
+        handler:  usersController.setProfilePicture
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/setContestPicture',
+        preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
+        handler:  contestController.setContestPicture
     });
 
     next();

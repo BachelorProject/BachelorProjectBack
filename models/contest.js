@@ -24,6 +24,11 @@ let modelDefinition = {
         allowNull: true
     },
 
+    contestPictureUrl: {
+        type: Sequelize.TEXT,
+        allowNull: true
+    },
+
     status: {
         type: Sequelize.STRING,
         unique: false,

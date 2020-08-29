@@ -46,7 +46,7 @@ module.exports = {
                     User.create(newUser).then(function(result) {
                         user = result.dataValues;
                         let token = signToken(user);
-                        reply.send({ success: true, token: token, new_user: true});
+                        reply.send({ success: true, token: token``, new_user: true});
                     });
                 } else {
                     reply.code(403); //// ????
@@ -217,6 +217,25 @@ module.exports = {
                         reply.code(404);
                         reply.send({ message: 'Error! try again later' });
                     }) //example
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500);
+            reply.send({ message: 'There was an error!' });
+        });
+
+    },
+
+    setProfilePicture:  (request, reply)  => {
+        User.findOne({ where: { id: request.user.dataValues.id } }).then(function(user) {
+            if(!user) {
+                reply.code(404);
+                reply.send({ message: 'User not found!' });
+            } else {
+                user.profilePictureUrl = request.file_url;
+                User.update({profilePictureUrl: request.file_url}, {where : {id: user.id} }).then(function(user) {
+                    reply.send({ success: true, file_url: request.file_url});
+                });
             }
         }).catch(function(error) {
             console.log('error in catch', error);

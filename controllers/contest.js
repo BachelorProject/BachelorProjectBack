@@ -215,7 +215,6 @@ async function getContests (params, reply) {
     });
 }
 
-
 module.exports = {
     createContest: async (request, reply) => {
         let newContest = {
@@ -263,5 +262,33 @@ module.exports = {
             userId : request.user.dataValues.id
         };
         await getContests(params, reply);
-    }
+    },
+
+    setContestPicture:  (request, reply)  => {
+        let userId = request.user.dataValues.id ,
+            id = request.body.id;
+        if(!userId || !id) {
+            reply.code(404);
+            reply.send({ message: 'contest not found!' });
+        }
+        Contest.findOne({ where: {
+                createUserId: userId ,
+                id : id
+            }}).then(function(contest) {
+            if(!contest) {
+                reply.code(404);
+                reply.send({ message: 'contest not found!' });
+            } else {
+                contest.contestPictureUrl = request.file_url;
+                Contest.update({contestPictureUrl: request.file_url}, {where : {id: contest.id} }).then(function(user) {
+                    reply.send({ success: true, file_url: request.file_url});
+                });
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500);
+            reply.send({ message: 'There was an error!' });
+        });
+
+    },
 };
