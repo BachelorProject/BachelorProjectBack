@@ -3,6 +3,8 @@ let Round = require('./../models/round');
 let Subject = require('./../models/subject');
 let User = require('./../models/user');
 let ContestRegisteredUser = require('./../models/contest_registered_user');
+let UserRoundResult = require('./../models/user_round_result');
+
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -260,7 +262,7 @@ module.exports = {
         let userId = request.user.dataValues.id ,
             id = request.body.id;
         if(!userId || !id) {
-            reply.code(404).send({ message: 'contest not found!' });
+            return reply.code(404).send({ message: 'contest not found!' });
         }
         Contest.findOne({ where: {
                 createUserId: userId ,
@@ -272,6 +274,8 @@ module.exports = {
                 contest.contestPictureUrl = request.file_url;
                 Contest.update({contestPictureUrl: request.file_url}, {where : {id: contest.id} }).then(function() {
                     reply.send({ success: true, file_url: request.file_url});
+                }).catch(function() {
+                    reply.code(500).send({ message: 'There was an error!' });
                 });
             }
         }).catch(function(error) {
@@ -280,4 +284,41 @@ module.exports = {
         });
 
     },
+
+    getLeaderBoardMeta: (request, reply) => {
+        let contestId = request.query.contestId,
+            roundNumber = request.query.roundNumber;
+        if (!contestId || !roundNumber){
+           return reply.code(404).send({ message: 'Not enough info!' });
+        }
+        Round.findOne({
+            group: ['description'],
+            attributes: [['description', 'title']],
+            where: {
+                contestId : contestId,
+                roundNo : roundNumber
+            },
+            include: [
+                {
+                    model: UserRoundResult,
+                    attributes: [[Sequelize.fn('COUNT', 'roundId'), 'UserCount']],
+                    required: false
+                }
+            ]}).then(function(round) {
+            if(!round) {
+                reply.code(404).send({ message: 'round not found!' });
+            } else {
+                //
+                //   myPlace: LeaderBoardPlaceModel;
+                //   title: string;
+                //   contestants: number;
+                reply.code(200).send({round: round});
+
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500).send({ message: 'There was an error!' });
+        });
+
+    }
 };

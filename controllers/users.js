@@ -34,7 +34,8 @@ module.exports = {
         db.sync().then(function() {
             let newUser = {
                 email: request.body.email,
-                password: request.body.password
+                password: request.body.password,
+                status: 'N'
             };
             if(!newUser.email || !newUser.password) {
                 reply.code(404);
@@ -46,7 +47,19 @@ module.exports = {
                     User.create(newUser).then(function(result) {
                         user = result.dataValues;
                         let token = signToken(user);
-                        reply.send({ success: true, token: token``, new_user: true});
+                        // reply.send({ success: true, token: token, new_user: true});
+
+                        // let token = signTokenForPasswordChange(user);
+                        mail.send(user.email, "E-mail Confirmation",
+                            "follow link to confirm e-mail: \n" +
+                            'http://localhost:4200/auth?' +
+                            'confirmationToken=' + token,
+                            () => {
+                                reply.send({success: true});
+                            },
+                            () => {
+                                reply.code(404).send({message: 'Error! try again later'});
+                            })
                     });
                 } else {
                     reply.code(403); //// ????
@@ -72,7 +85,7 @@ module.exports = {
 
         let password = request.body.password;
 
-        User.findOne({ where: { email: request.body.email } }).then(function(user) {
+        User.findOne({ where: { email: request.body.email , status: 'A'} }).then(function(user) {
             if(!user) {
                 reply.code(404);
                 reply.send({ message: 'Authentication failed!' });
@@ -95,22 +108,44 @@ module.exports = {
 
     },
 
+    confirmEmail:  (request, reply)  => {
+        console.log('confirmEmail!!!!!!!!!!!!!!!!!');
+
+        User.findOne({ where: { id: request.user.dataValues.id  } }).then(function(user) {
+            if(!user) {
+                reply.code(404).send({ message: 'Authentication failed!' });
+            } else {
+                user.status = 'A';
+                User.update({status : 'A'}, {where : {id: user.id} }).then(function() {
+                    let token = signToken(user);
+                    reply.send({ success: true, token: token, new_user: true});
+                })
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500).send({ message: 'There was an error!' });
+        });
+    },
+
     changePassword:  (request, reply)  => {
         console.log('changePassword!!!!!!!!!!!!!!!!!');
 
-        if(!request.body.email || !request.body.password) {
+        if( !request.body.password) {
             reply.code(404);
-            return reply.send({ message: 'Email and password are needed!' });
+            return reply.send({ message: 'New password is needed!' });
         }
 
         let password = request.body.password;
-        User.findOne({ where: { email: request.body.email } }).then(function(user) {
+
+        let userId = request.user.dataValues.id;
+
+        User.findOne({ where: { id: userId} }).then(function(user) {
             if(!user) {
                 reply.code(404);
                 reply.send({ message: 'Authentication failed!' });
             } else {
                 user.password = password;
-                User.update({password: password}, {where : {id: user.id} }).then(function(user) {
+                User.update({password: password}, {where : {id: userId} }).then(function() {
                     let token = signToken(user);
                     reply.send({ success: true, token: token, new_user: false});
                 });
@@ -205,8 +240,8 @@ module.exports = {
                 let token = signTokenForPasswordChange(user);
                 mail.send(user.email, "password change",
                     "follow link to change password: \n" +
-                    'http://localhost:4200/?recoverEmail=' +user.email +
-                    '&recoverToken=' + token,
+                    'http://localhost:4200/auth?' +
+                    'recoverToken=' + token,
                     () => {
                         reply.send({ success: true});
                     },

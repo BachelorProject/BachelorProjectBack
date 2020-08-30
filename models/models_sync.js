@@ -8,7 +8,7 @@ let Contest  =  require('./../models/contest');
 let Question  =  require('./../models/question');
 let QuestionAnswer  =  require('./../models/question_answer');
 let UserQuestionAnswer = require('./user_question_answer');
-let UserRoundScores = require('./user_round_score');
+let UserRoundScores = require('./user_round_result');
 
 let sequelize = require('../db_connection');
 sequelize.sync();

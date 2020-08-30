@@ -75,6 +75,13 @@ module.exports = function (fastify, opts, next) {
     });
 
     fastify.route({
+        method: 'GET',
+        url: '/api/confirm_email',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: usersController.confirmEmail
+    });
+
+    fastify.route({
         method: 'POST',
         schema: schemas.authSchema,
         url: '/api/signin',
@@ -147,6 +154,14 @@ module.exports = function (fastify, opts, next) {
         url: '/api/setContestPicture',
         preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
         handler:  contestController.setContestPicture
+    });
+
+
+    fastify.route({
+        method: 'GET',
+        url: '/api/getLeaderBoardMeta',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler:  contestController.getLeaderBoardMeta
     });
 
     next();
