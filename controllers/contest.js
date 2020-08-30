@@ -62,7 +62,7 @@ async function getContests (params, reply) {
 
     if (subjects){
         options.include[0].required = true;
-        options.include[0].where = { id: subjects.split()};
+        options.include[0].where = { id: subjects.split(',')};
     }
 
     if (registeredContest){
@@ -130,7 +130,7 @@ async function getContests (params, reply) {
                         subjects.push({
                             id: contestWithSubjects[i].subjects[j].id,
                             name: contestWithSubjects[i].subjects[j].subject,
-                            color_id: contestWithSubjects[i].subjects[j].colorId
+                            colorId: contestWithSubjects[i].subjects[j].colorId
                         });
                         subjectsDict[contestWithSubjects[i].id] = subjects;
                     }
@@ -193,7 +193,7 @@ async function getContests (params, reply) {
                         }
                     }
 
-                    reply.send({error:false, message: 'contests list', contestsInfo: contestsInfo });
+                    reply.send( contestsInfo);
 
                 }).catch(function(){
                     reply.code(500).send({ message: 'There was an error!' });
