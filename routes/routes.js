@@ -144,14 +144,14 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'POST',
-        url: '/api/setProfilePicture',
+        url: '/api/set_profile_picture',
         preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
         handler:  usersController.setProfilePicture
     });
 
     fastify.route({
         method: 'POST',
-        url: '/api/setContestPicture',
+        url: '/api/set_contest_picture',
         preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
         handler:  contestController.setContestPicture
     });
@@ -159,11 +159,17 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'GET',
-        url: '/api/getLeaderBoardMeta',
+        url: '/api/leader_board_meta',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler:  contestController.getLeaderBoardMeta
     });
 
+    fastify.route({
+        method: 'GET',
+        url: '/api/leaderboard',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler:  contestController.getLeaderBoard
+    });
     next();
 
 };

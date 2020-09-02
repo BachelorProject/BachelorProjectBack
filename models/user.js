@@ -61,6 +61,11 @@ let modelDefinition = {
     status: {
         type: Sequelize.STRING,
         allowNull: true
+    },
+
+    userName: {
+        type: Sequelize.STRING,
+        allowNull: true
     }
 };
 

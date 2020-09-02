@@ -258,7 +258,7 @@ module.exports = {
         await getContests(params, reply);
     },
 
-    setContestPicture:  (request, reply)  => {
+    setContestPicture:  async (request, reply)  => {
         let userId = request.user.dataValues.id ,
             id = request.body.id;
         if(!userId || !id) {
@@ -285,35 +285,152 @@ module.exports = {
 
     },
 
-    getLeaderBoardMeta: (request, reply) => {
+    getLeaderBoardMeta: async (request, reply) => {
         let contestId = request.query.contestId,
-            roundNumber = request.query.roundNumber;
+            roundNumber = request.query.roundNumber,
+            userId = request.user.dataValues.id;
         if (!contestId || !roundNumber){
            return reply.code(404).send({ message: 'Not enough info!' });
         }
         Round.findOne({
-            group: ['description'],
-            attributes: [['description', 'title']],
+            attributes: ['id', ['description', 'title']],
             where: {
                 contestId : contestId,
                 roundNo : roundNumber
-            },
-            include: [
-                {
-                    model: UserRoundResult,
-                    attributes: [[Sequelize.fn('COUNT', 'roundId'), 'UserCount']],
-                    required: false
-                }
-            ]}).then(function(round) {
+            }}).then(function(round) {
             if(!round) {
                 reply.code(404).send({ message: 'round not found!' });
             } else {
-                //
-                //   myPlace: LeaderBoardPlaceModel;
-                //   title: string;
-                //   contestants: number;
-                reply.code(200).send({round: round});
 
+                UserRoundResult.findOne({
+                    attributes :[[Sequelize.fn('COUNT', 'roundId'), 'userCount']],
+                    where : {roundId : round.id}}
+                ).then(function (results) {
+                    let userCount = 0;
+                    if (results){
+                        userCount = results.dataValues.userCount;
+                    }
+                    // get place model
+                    let startTime = round.dataValues.startTime;
+                    UserRoundResult.findOne({
+                        where : {
+                            userId: userId,
+                            roundId: round.id
+                        },
+                        include : {
+                            model : User
+                        }
+                    }).then(function (userResult) {
+
+                        if (userResult == null){
+                            reply.code(200).send({title: round.dataValues.title, contestants : userCount});
+                        }else{
+                            let vals = userResult.dataValues;
+                            let userVals = vals.user.dataValues;
+
+                            let result = {
+                                rank: 1,
+                                username: userVals.userName, //todo
+                                imageUrl: userVals.profilePictureUrl,
+                                score: vals.score,
+                                userId: userId,
+                                time: (vals.end_time - startTime) / 1000 // in seconds
+                            };
+                            UserRoundResult.findOne({
+                                attributes :[[Sequelize.fn('COUNT', 'roundId'), 'rank']],
+                                where: {
+                                    roundId: round.id,
+                                    [Op.or]: {
+                                        score: {[Op.gt]: result.score},
+                                        [Op.and]: {
+                                            score: {[Op.eq]: vals.score},
+                                            end_time: {[Op.lt]: vals.end_time}
+                                        }
+                                    }
+                                }
+                            }).then(function (rankRes) {
+                                result.rank = rankRes.dataValues.rank + 1;
+                                // resolve (result);
+                                reply.code(200).send({title: round.dataValues.title, contestants : userCount, myPlace: result});
+
+                            }).catch(function(err){
+                                console.log(err);
+                                reply.code(500).send({ message: 'There was an error!' });
+                            });
+                        }
+
+                    }).catch(function(error) {
+                        console.log('error in catch', error);
+                        reply.code(500).send({ message: 'There was an error!' });
+                    });
+                }).catch(function(error) {
+                    console.log('error in catch', error);
+                    reply.code(500).send({ message: 'There was an error!' });
+                });
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500).send({ message: 'There was an error!' });
+        });
+
+    },
+
+
+    getLeaderBoard: async (request, reply) => {
+        let contestId = request.query.contestId,
+            roundNumber = request.query.roundNumber,
+            from  = request.query.from,
+            count = request.query.count;
+
+        Round.findOne({
+            // attributes: ['id', ['description', 'title']],
+            where: {
+                contestId : contestId,
+                roundNo : roundNumber
+            }}).then(function(round) {
+            if(!round) {
+                reply.code(404).send({ message: 'round not found!' });
+            } else {
+                let options = {
+                    where : {
+                        roundId: round.id
+                    },
+                    include : {
+                        model : User
+                    },
+                    order : [['score', 'DESC'],['end_time', 'ASC']]
+                };
+
+                if (count){
+                    count = parseInt(count);
+                    options.limit = count;
+                }
+
+                if (from){
+                    from = parseInt(from);
+                    options.offset = from;
+                }
+
+                UserRoundResult.findAll(options).then(function (userResults) {
+                    let results = [];
+                    let startTime = round.startTime;
+                    for (let i = 0; i < userResults.length; i++) {
+                        results.push({
+                            rank : from + i + 1, // ???
+                            username : userResults[i].user.userName,
+                            imageUrl : userResults[i].user.profilePictureUrl,
+                            score: userResults[i].score,
+                            userId: userResults[i].userId,
+                            time: (userResults[i].end_time  - startTime) / 1000 // in seconds
+                        });
+                    }
+
+                    reply.send(results);
+
+                }).catch(function(error) {
+                    console.log('error in catch', error);
+                    reply.code(500).send({ message: 'There was an error!' });
+                });
             }
         }).catch(function(error) {
             console.log('error in catch', error);
