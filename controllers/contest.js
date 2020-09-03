@@ -81,6 +81,15 @@ async function getContests(params, reply) {
                 id: userId
             }
         })
+    }else{
+        options.include.push({
+            model: User,
+            required: false,
+            through: ContestRegisteredUser,
+            where: {
+                id: userId
+            }
+        })
     }
 
     let contestsInfo = [];
@@ -102,8 +111,13 @@ async function getContests(params, reply) {
                 nextContestStart: null,
                 nextContestDuration: null, //todo
                 subjects: [],
-                registeredCount: null
+                registeredCount: null,
+                isRegistered: true
             });
+            if(!(contests[i].users.length > 0)){
+                // console.log(contests[i].title + 'REGISTERED');
+                contestsInfo[contestsInfo.length -1].isRegistered = false;
+            }
             contestIds.push(contests[i].id)
         }
 
@@ -574,7 +588,8 @@ module.exports = {
                     createUser: contest.createUserId,
                     status: contest.status,
                     rounds: [],
-                    subjectIds: []
+                    subjectIds: [],
+                    isRegistered: false
                 };
                 console.log('in thn');
                 reply.send({success: true, contest: contestInfo});
@@ -600,6 +615,14 @@ module.exports = {
                         //     attributes: [['id', 'questionId'], [Sequelize.fn('COUNT', 'id'), 'questionCount']],
                         //     group: ['roundId']
                         // },
+                    },
+                    {
+                        model: User,
+                        required: false,
+                        through: ContestRegisteredUser,
+                        where: {
+                            id: userId
+                        }
                     }
                 ],
 
@@ -616,7 +639,12 @@ module.exports = {
                             createUser: contest.createUserId,
                             status: contest.status, //todo Statuses
                             rounds: contest.rounds,
+                            isRegistered: true
                         };
+
+                        if(!(contest.users.length > 0)){
+                            contestInfo.isRegistered = false;
+                        }
 
                         if (contest.registrationDeadline) {
                             contestInfo.registrationEnd = contest.registrationDeadline.time;
