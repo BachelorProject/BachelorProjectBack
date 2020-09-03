@@ -272,4 +272,43 @@ module.exports = {
         });
 
     },
+
+    getUserInfo: async (request, reply) => {
+        let userId = request.query.userId;
+
+
+        // UserInformation {
+        //     userId: number;
+        //     firstName: string;
+        //     lastName: string;
+        //     gender: string;
+        //     birthDay: number; // timestamp
+        //     education: string;
+        //     username: string;
+        //     profileImageUrl: string;
+        //     email: string;
+        //     subjects: SubjectStat[];
+
+        User.findOne({
+            where: {
+                id: userId
+            },
+            attributes: [['id', 'userId'], ['first_name', 'firstName'], ['last_name', 'lastName'], 'gender', 'birthday', 'education', 'username', ['profilePictureUrl','profileImageUrl'], 'email']
+        }).then(function (user) {
+            if(!user){
+                reply.send('User not found');
+            }else{
+                reply.send(user);
+            }
+        }).catch(function(error) {
+            console.log('error in catch', error);
+            reply.code(500).send({ message: 'There was an error!' });
+        });
+
+
+
+
+    }
+
+
 };

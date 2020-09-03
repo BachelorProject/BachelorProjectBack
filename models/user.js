@@ -3,6 +3,7 @@
 const Sequelize = require('sequelize');
 const bcrypt = require('bcrypt');
 const db = require('../db_connection');
+const config = require('./../config/config');
 
 let modelDefinition = {
     email: {
@@ -55,19 +56,32 @@ let modelDefinition = {
 
     profilePictureUrl: {
         type: Sequelize.TEXT,
+        allowNull: true,
+        defaultValue: config.API_URL +  config.PUBLIC_DIR_URL + config.DEFAULT_AVATAR
+    },
+
+    username: {
+        type: Sequelize.STRING,
         allowNull: true
     },
 
+    gender: {
+        type: Sequelize.STRING
+    },
+
+    birthday : {
+        type: Sequelize.DATE
+    },
+
+    education: {
+        type: Sequelize.STRING
+    },
     status: {
         type: Sequelize.STRING,
         allowNull: true
     },
-
-    userName: {
-        type: Sequelize.STRING,
-        allowNull: true
-    }
 };
+
 
 let modelOptions = {
     hooks: {

@@ -21,3 +21,6 @@ config.JWT_SECRET = process.env.JWT_SECRET;
 config.EMAIL_USER = process.env.EMAIL_USER;
 config.EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 config.API_URL = process.env.API_URL;
+config.PUBLIC_DIR_URL = process.env.PUBLIC_DIR_URL;
+config.DEFAULT_AVATAR = process.env.DEFAULT_AVATAR;
+config.DEFAULT_CONTEST_AVATAR = process.env.DEFAULT_CONTEST_AVATAR;

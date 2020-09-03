@@ -116,9 +116,9 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'POST',
-        url: '/api/create_contest',
+        url: '/api/update_contest',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
-        handler: contestController.createContest
+        handler: contestController.updateContest
     });
 
     fastify.route({
@@ -130,9 +130,30 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'GET',
+        url: '/api/contest',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getContest
+    });
+
+    fastify.route({
+        method: 'GET',
         url: '/api/tournament/registered_list',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: contestController.getRegisteredTournamentList
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/api/user_info',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: usersController.getUserInfo
+    });
+
+    fastify.route({
+        method: 'GET',
+        url: '/api/questions',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getQuestions
     });
 
     fastify.route({
@@ -155,7 +176,6 @@ module.exports = function (fastify, opts, next) {
         preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
         handler:  contestController.setContestPicture
     });
-
 
     fastify.route({
         method: 'GET',

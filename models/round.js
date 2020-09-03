@@ -8,7 +8,7 @@ let Question = require('./../models/question');
 let modelDefinition = {
     roundNo: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        // allowNull: false
     },
 
     description: {
