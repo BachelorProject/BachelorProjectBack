@@ -8,15 +8,6 @@ let ContestRegisteredUser = require('./../models/contest_registered_user');
 let ContestSubject = require('./../models/contest_subject');
 let Round = require('./../models/round');
 
-
-// 'UNPUBLISHED', 'REGISTRATION ON', 'REGISTRATION OVER', 'ONGOING', 'CANCELLED', 'COMPLETED'
-const STATUS_UNPUBLISHED = 'UNPUBLISHED';
-const STATUS_REGISTRATION_ON = 'REGISTRATION ON';
-const STATUS_REGISTRATION_OVER = 'REGISTRATION OVER';
-const STATUS_ONGOING = 'ONGIONG';
-const STATUS_CANCELLED = 'CANCELLED';
-const STATUS_COMPLETED = 'COMPLETED';
-
 let modelDefinition = {
     title: {
         type: Sequelize.STRING,
@@ -45,10 +36,17 @@ let modelDefinition = {
         type: Sequelize.STRING,
         unique: false,
         allowNull: false,
-        defaultValue: STATUS_UNPUBLISHED,
-        // validate: {
-        //     isIn: []
-        // }
+        defaultValue: config.STATUS_UNPUBLISHED,
+        validate: {
+            isIn: [
+                config.STATUS_UNPUBLISHED,
+                config.STATUS_REGISTRATION_ON,
+                config.STATUS_REGISTRATION_OVER,
+                config.STATUS_CANCELLED,
+                config.STATUS_COMPLETED,
+                config.STATUS_ONGOING
+            ]
+        }
     }
 };
 
@@ -68,9 +66,4 @@ Contest.hasMany(Round); /// ???
 // Round.belongsTo(Contest);
 
 module.exports = Contest;
-exports.STATUS_UNPUBLISHED = STATUS_UNPUBLISHED;
-exports.STATUS_REGISTRATION_ON = STATUS_REGISTRATION_ON;
-exports.STATUS_REGISTRATION_OVER = STATUS_REGISTRATION_OVER;
-exports.STATUS_ONGOING = STATUS_ONGOING;
-exports.STATUS_CANCELLED = STATUS_CANCELLED;
-exports.STATUS_COMPLETED = STATUS_COMPLETED;
+

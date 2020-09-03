@@ -10,12 +10,12 @@ let AnswerType = require('./../models/answer_type');
 let ContestSubject = require('./../models/contest_subject');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-
+const config = require('./../config/config');
 
 async function getContests(params, reply) {
     let userId = params.userId;
     let createdByMe = params.createdByMe;
-    let registrationIsOff = params.registrationIsOff;
+    let registrationIsOn = params.registrationIsOn;
     let subjects = params.subjects;
     let limit = params.limit;
     let from = params.from;
@@ -49,12 +49,18 @@ async function getContests(params, reply) {
         options.offset = from;
     }
 
-    if (registrationIsOff === 'false') {
-        options.where.status = ['N', 'P']; // TODO statuses
-    } else if (registrationIsOff === 'true') {
-        options.where.status = {
-            [Op.not]: ['N', 'P']
-        };
+    // let availableStatuses = [];
+
+    if (registrationIsOn === 'true') {
+        options.where.status = [config.STATUS_REGISTRATION_ON];
+        options.order = ['registrationEnd'];
+    } else if (registrationIsOn === 'false') {
+        if (createdByMe === 'true') {
+            options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED, config.STATUS_UNPUBLISHED];
+        }else{
+            options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED];
+        }
+        options.order = ['registrationEnd', 'DESC'];
     }
 
     if (createdByMe === 'true') {
@@ -141,18 +147,27 @@ async function getContests(params, reply) {
                 Round.findAll({
                     where: {
                         contestId: contestIds,
-                        status: ['A', 'C']
+                        // status: ['A', 'C']
+                        status: [config.STATUS_ONGOING, config.STATUS_ACTIVE, config.STATUS_COMPLETED],
                     },
                 }).then(function (rounds) {
 
                     for (let i = 0; i < rounds.length; i++) {
+                        console.log(rounds[i]);
                         let contestId = rounds[i].contestId;
                         if (!roundsDict[contestId]) {
                             roundsDict[contestId] = {'A': {}, 'C': {}};
                         }
-                        roundsDict[contestId][rounds[i].status][rounds[i].roundNo] = {
-                            duration: rounds[i].duration,
-                            startTime: rounds[i].startTime,
+                        if (rounds[i].status === config.STATUS_ACTIVE){
+                            roundsDict[contestId]['A'][rounds[i].roundNo] = {
+                                duration: rounds[i].duration,
+                                startTime: rounds[i].startTime,
+                            }
+                        }else{
+                            roundsDict[contestId]['C'][rounds[i].roundNo] = {
+                                duration: rounds[i].duration,
+                                startTime: rounds[i].startTime,
+                            }
                         }
                     }
 
@@ -254,7 +269,7 @@ module.exports = {
         // contestInfo.subjectIds = subjectIds;
 
         //update contestinfo
-        Contest.update(contestModel, {where: {id: contestInfo.id}}).then(function (contest) {
+        Contest.update(contestModel, {where: {id: contestInfo.id}}).then(function () {
             //
             ContestSubject.destroy({where: {contestId: contestInfo.id}}).then(function () {
 
@@ -292,7 +307,7 @@ module.exports = {
                 let subjectsPromise = contestInfo.subjectIds.length > 0 ? ContestSubject.bulkCreate(records) : Promise.resolve();
                 let roundsPromise = contestInfo.rounds.length > 0 ? Round.bulkCreate(roundModels, {updateOnDuplicate: ['id']}) : Promise.resolve();
 
-                Promise.all([subjectsPromise, roundsPromise]).then(results => {
+                Promise.all([subjectsPromise, roundsPromise]).then(() => {
                     // access results here, p2 is undefined if the condition did not hold
                     reply.code(200).send();
                 }).catch(function (error) {
@@ -300,37 +315,10 @@ module.exports = {
                     reply.code(500).send({message: 'There was an error!'});
                 });
 
-                // if (contestInfo.subjectIds.length > 0) {
-                //
-                //     //
-                //     // ContestSubject.bulkCreate(records).then(function (contestSubjects) {
-                //     //     reply.send({success: true, contest: contest, contestSubjects: contestSubjects});
-                //     // }).catch(function (error) {
-                //     //     console.log('error in catch', error);
-                //     //     reply.code(500).send({message: 'There was an error!'});
-                //     // });
-                // }
-                //
-                // // reply.send({success: true, contest: contest});
-                //
-                //
-                // if (contestInfo.rounds.length > 0) {
-                //
-                //     // //contestInfo.rounds
-                //     // Round.bulkCreate(roundModels, {updateOnDuplicate: ['id']}).then(function (newRounds) {
-                //     //     reply.send({yeyy: newRounds})
-                //     // }).catch(function (error) {
-                //     //     console.log('error in catch', error);
-                //     //     reply.code(500).send({message: 'There was an error!'});
-                //     // });
-                //
-                // }
-
             }).catch(function (error) {
                 console.log('error in catch', error);
                 reply.code(500).send({message: 'There was an error!'});
             });
-
 
             // roundId: number
             // roundNo: number;
@@ -343,46 +331,18 @@ module.exports = {
             // status: string; //   'ACTIVE', 'ONGOING', 'CANCELLED', 'COMPLETED'
             // startTime: number;
 
-            // roundNo: contest.rounds[i].roundNo,
-            //     strictMode: contest.rounds[i].strictMode,
-            //     isOpen: contest.rounds[i].isOpen,
-            //     duration: contest.rounds[i].duration,
-            //     placeToPass: contest.rounds[i].passingPlace,
-            //     pointsToPass: contest.rounds[i].passingScore,
-            //     status: contest.rounds[i].status,
-            //     startTime: contest.rounds[i].startTime,
-            //     questions: contest.rounds[i].questions
-
         }).catch(function (error) {
             console.log('error in catch', error);
             reply.code(500).send({message: 'There was an error!'});
         });
 
-
-        //
-        //
-        // Contest.findOne({where: {title: newContest.title}}).then(function (contest) {
-        //     if (!contest) {
-        //         Contest.create(newContest).then(function (result) {
-        //             reply.send({success: true, contest: result});
-        //         }).catch(function (error) {
-        //             console.log('error in catch', error);
-        //             reply.code(500).send({message: 'There was an error!'});
-        //         });
-        //     } else {
-        //         reply.code(403).send({message: 'contest with same name already exists'});
-        //     }
-        // }).catch(function (err) {
-        //     console.log('Oops! something went wrong, : ', err);
-        //     reply.code(500).send({message: 'There was an error!'});
-        // });
     },
 
 
     getTournamentList: async (request, reply) => {
         let params = {
             createdByMe: request.query.myContests,
-            registrationIsOff: request.query.pastContests,
+            registrationIsOn: request.query.registrationIsOn,
             subjects: request.query.subjectIds,
             limit: request.query.to - request.query.from,
             from: parseInt(request.query.from),
@@ -561,7 +521,7 @@ module.exports = {
 
                 UserRoundResult.findAll(options).then(function (userResults) {
                     let results = [];
-                    let startTime = round.startTime;
+                    let startTime = config.STArtTime;
                     for (let i = 0; i < userResults.length; i++) {
                         results.push({
                             rank: from + i + 1, // ???
@@ -681,7 +641,7 @@ module.exports = {
                             };
 
                             if (contest.rounds[i].startTime) {
-                                round.startTime = new Date(contest.rounds[i].startTime).getTime();
+                                config.STArtTime = new Date(contest.rounds[i].startTime).getTime();
                             }
 
                             if (round.placeToPass === null) {

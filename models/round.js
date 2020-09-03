@@ -2,8 +2,9 @@
 
 const Sequelize = require('sequelize');
 const db = require('../db_connection');
-
+const config = require('./../config/config');
 let Question = require('./../models/question');
+
 
 let modelDefinition = {
     roundNo: {
@@ -47,14 +48,22 @@ let modelDefinition = {
         type: Sequelize.STRING,
         unique: false,
         allowNull: false,
-        defaultValue: 'N',
-        // validate: {
-        //     isIn: []
-        // }
+        defaultValue: config.STATUS_ACTIVE,
+        validate: {
+            isIn: [
+                config.STATUS_ACTIVE,
+                config.STATUS_ONGOING,
+                config.STATUS_CANCELLED,
+                config.STATUS_COMPLETED,
+                config.STATUS_DELETED
+            ]
+        }
     }
 };
+
 
 let Round = db.define('round', modelDefinition, {});
 Round.hasMany(Question);
 Question.belongsTo(Round);
 module.exports = Round;
+
