@@ -53,14 +53,14 @@ async function getContests(params, reply) {
 
     if (registrationIsOn === 'true') {
         options.where.status = [config.STATUS_REGISTRATION_ON];
-        options.order = ['registrationEnd'];
+        options.order = ['registrationDeadline'];
     } else if (registrationIsOn === 'false') {
         if (createdByMe === 'true') {
             options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED, config.STATUS_UNPUBLISHED];
         }else{
             options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED];
         }
-        options.order = ['registrationEnd', 'DESC'];
+        options.order = [['registrationDeadline', 'DESC']];
     }
 
     if (createdByMe === 'true') {
@@ -98,7 +98,7 @@ async function getContests(params, reply) {
                 title: contests[i].title,
                 body: contests[i].description,
                 imageUrl: contests[i].contestPictureUrl,
-                registrationEnd: new Date(contests[i].registrationEnd).getTime(),
+                registrationEnd: new Date(contests[i].registrationDeadline).getTime(),
                 nextContestStart: null,
                 nextContestDuration: null, //todo
                 subjects: [],
@@ -211,19 +211,23 @@ async function getContests(params, reply) {
 
                     reply.send(contestsInfo);
 
-                }).catch(function () {
+                }).catch(function (err) {
+                    console.log(err);
                     reply.code(500).send({message: 'There was an error!'});
                 });
 
-            }).catch(function () {
+            }).catch(function (err) {
+                console.log(err);
                 reply.code(500).send({message: 'There was an error!'});
             });
 
-        }).catch(function () {
+        }).catch(function (err) {
+            console.log(err);
             reply.code(500).send({message: 'There was an error!'});
         });
 
-    }).catch(function () {
+    }).catch(function (err) {
+        console.log(err);
         reply.code(500).send({message: 'There was an error!'});
     });
 }
@@ -521,7 +525,7 @@ module.exports = {
 
                 UserRoundResult.findAll(options).then(function (userResults) {
                     let results = [];
-                    let startTime = config.STArtTime;
+                    let startTime = round.startTime;
                     for (let i = 0; i < userResults.length; i++) {
                         results.push({
                             rank: from + i + 1, // ???
@@ -641,7 +645,7 @@ module.exports = {
                             };
 
                             if (contest.rounds[i].startTime) {
-                                config.STArtTime = new Date(contest.rounds[i].startTime).getTime();
+                                round.startTime = new Date(contest.rounds[i].startTime).getTime();
                             }
 
                             if (round.placeToPass === null) {
