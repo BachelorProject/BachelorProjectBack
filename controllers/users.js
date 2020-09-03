@@ -93,7 +93,13 @@ module.exports = {
                 user.comparePasswords(password, function(error, isMatch) {
                     if(isMatch && !error) {
                         let token = signToken(user);
-                        reply.send({ success: true, token: token, new_user: false});
+
+                        let CurrentUserInformation = {
+                            userId: user.id,
+                            profileImageUrl: user.profilePictureUrl
+                        };
+                        reply.send({ success: true, token: token, new_user: false, CurrentUserInformation: CurrentUserInformation });
+
                     } else {
                         reply.code(404);
                         reply.send({ message: 'Authentication failed!' });
@@ -118,7 +124,11 @@ module.exports = {
                 user.status = 'A';
                 User.update({status : 'A'}, {where : {id: user.id} }).then(function() {
                     let token = signToken(user);
-                    reply.send({ success: true, token: token, new_user: true});
+                    let CurrentUserInformation = {
+                        userId: user.id,
+                        profileImageUrl: user.profilePictureUrl
+                    };
+                    reply.send({ success: true, token: token, new_user: true, CurrentUserInformation: CurrentUserInformation });
                 })
             }
         }).catch(function(error) {
@@ -147,7 +157,11 @@ module.exports = {
                 user.password = password;
                 User.update({password: password}, {where : {id: userId} }).then(function() {
                     let token = signToken(user);
-                    reply.send({ success: true, token: token, new_user: false});
+                    let CurrentUserInformation = {
+                        userId: user.id,
+                        profileImageUrl: user.profilePictureUrl
+                    };
+                    reply.send({ success: true, token: token, new_user: false, CurrentUserInformation: CurrentUserInformation });
                 });
             }
         }).catch(function(error) {
@@ -177,11 +191,19 @@ module.exports = {
                 User.create(newUser).then(function(result) {
                     user = result.dataValues;
                     let token = signToken(user);
-                    reply.send({ success: true, token: token, new_user: true });
+                    let CurrentUserInformation = {
+                        userId: user.id,
+                        profileImageUrl: user.profilePictureUrl
+                    };
+                    reply.send({ success: true, token: token, new_user: true, CurrentUserInformation: CurrentUserInformation });
                 });
             }else{
                 let token = signToken(user);
-                reply.send({ success: true, token: token, new_user: false });
+                let CurrentUserInformation = {
+                    userId: user.id,
+                    profileImageUrl: user.profilePictureUrl
+                };
+                reply.send({ success: true, token: token, new_user: false, CurrentUserInformation: CurrentUserInformation });
             }
 
         }).catch(function(error) {
@@ -212,11 +234,19 @@ module.exports = {
                 User.create(newUser).then(function(result) {
                     user = result.dataValues;
                     let token = signToken(user);
-                    reply.send({ success: true, token: token, new_user: true });
+                    let CurrentUserInformation = {
+                        userId: user.id,
+                        profileImageUrl: user.profilePictureUrl
+                    };
+                    reply.send({ success: true, token: token, new_user: true, CurrentUserInformation: CurrentUserInformation });
                 });
             }else{
                 let token = signToken(user);
-                reply.send({ success: true, token: token, new_user: false });
+                let CurrentUserInformation = {
+                    userId: user.id,
+                    profileImageUrl: user.profilePictureUrl
+                };
+                reply.send({ success: true, token: token, new_user: false, CurrentUserInformation: CurrentUserInformation });
             }
         }).catch(function(error) {
             console.log('error in catch', error);

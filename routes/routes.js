@@ -158,6 +158,13 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'GET',
+        url: '/api/past_contests',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getPastContests
+    });
+
+    fastify.route({
+        method: 'GET',
         url: '/api/subjects',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: subjectController.getSubjects

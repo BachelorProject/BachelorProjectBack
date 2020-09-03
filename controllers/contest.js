@@ -432,7 +432,7 @@ module.exports = {
     getLeaderBoardMeta: async (request, reply) => {
         let roundNumber = request.query.roundNumber,
             userId = request.user.dataValues.id;
-        if ( !roundNumber) {
+        if (!roundNumber) {
             return reply.code(404).send({message: 'Not enough info!'});
         }
         Round.findOne({
@@ -607,6 +607,7 @@ module.exports = {
                     body: contest.description,
                     imageUrl: contest.contestPictureUrl,
                     registrationEnd: contest.registrationDeadline,
+                    createUser: contest.createUserId,
                     status: contest.status,
                     rounds: [],
                     subjectIds: []
@@ -648,6 +649,7 @@ module.exports = {
                             body: contest.description,
                             imageUrl: contest.contestPictureUrl,
                             registrationEnd: contest.registrationDeadline,
+                            createUser: contest.createUserId,
                             status: contest.status, //todo Statuses
                             rounds: contest.rounds,
                         };
@@ -766,7 +768,55 @@ module.exports = {
             //
 
 
-        }).catch();
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+
+    },
+
+
+    getPastContests: async (request, reply) => {
+//         imageUrl: string;
+// title: string;
+// subjectIds: number[];
+// contestId: number;
+        let userId = request.query.userId;
+        Contest.findAll({
+            include: [
+                {
+                    model: User,
+                    required: true,
+                    through: ContestRegisteredUser,
+                    where: {
+                        id: userId
+                    }
+                },
+                {
+                    model: Subject
+                }
+            ]
+        }).then(function (contests) {
+            let contestsInfo = [];
+            for(let i = 0; i < contests.length; i++ ){
+                let contestInfo = {
+                    contestId: contests[i].id,
+                    title: contests[i].title,
+                    imageUrl: contests[i].contestPictureUrl
+                };
+                let subjectIds = [];
+                for (let j = 0; j < contests[i].subjects.length; j++){
+                    subjectIds.push(contests[i].subjects[j].id);
+                }
+                contestInfo.subjectIds = subjectIds;
+                contestsInfo.push(contestInfo);
+            }
+            reply.send(contestsInfo);
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
 
     }
+
 };
