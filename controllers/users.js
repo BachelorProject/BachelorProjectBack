@@ -1,6 +1,6 @@
 let db = require('./../db_connection'),
     User = require('./../models/user');
-
+    UserRating = require('./../models/user_rating');
 const JWT = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/config');
 const mail = require('./../modules/mailsender/sender');
@@ -290,15 +290,62 @@ module.exports = {
         //     subjects: SubjectStat[];
 
         User.findOne({
+            // attributes: [['id', 'userId'], ['first_name', 'firstName'], ['last_name', 'lastName'], 'gender', 'birthday', 'education', 'username', ['profilePictureUrl','profileImageUrl'], 'email'],
             where: {
                 id: userId
             },
-            attributes: [['id', 'userId'], ['first_name', 'firstName'], ['last_name', 'lastName'], 'gender', 'birthday', 'education', 'username', ['profilePictureUrl','profileImageUrl'], 'email']
+            include: {
+                model : UserRating,
+                // as: 'usRating',
+                // order: ['subjectId', 'createdAt']
+            },
+            order: [['userRatings','subjectId' ], ['userRatings','createdAt']]
+
         }).then(function (user) {
             if(!user){
                 reply.send('User not found');
             }else{
-                reply.send(user);
+                let userInfo = {
+                    userId: user.id,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    gender: user.gender,
+                    birthday: user.birthday,
+                    education: user.education,
+                    username: user.username,
+                    profileImageUrl: user.profilePictureUrl,
+                    email: user.email
+                };
+
+                let subjects = [];
+                let subjectId = null;
+                let subjectStats = [];
+                for (let i = 0; i < user.userRatings.length; i++){
+                    if( subjectId !== user.userRatings[i].subjectId ){
+                        if(subjectId){
+                            subjects.push({
+                                subjectId: subjectId,
+                                subjectStats: subjectStats
+                            });
+                        }
+                        subjectId = user.userRatings[i].subjectId;
+                        subjectStats = [];
+                    }
+                    subjectStats.push({
+                        timestamp: new Date(user.userRatings[i].createdAt).getTime(),
+                        score: user.userRatings[i].rating
+                    });
+                }
+
+                if(subjectId){
+                    subjects.push({
+                        subjectId: subjectId,
+                        subjectStats: subjectStats
+                    });
+                }
+
+                userInfo.subjects = subjects;
+                reply.send(userInfo);
             }
         }).catch(function(error) {
             console.log('error in catch', error);

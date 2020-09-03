@@ -9,6 +9,7 @@ let Question  =  require('./../models/question');
 let QuestionAnswer  =  require('./../models/question_answer');
 let UserQuestionAnswer = require('./user_question_answer');
 let UserRoundScores = require('./user_round_result');
+let UserRatings = require('./user_rating');
 
 let sequelize = require('../db_connection');
 sequelize.sync();
