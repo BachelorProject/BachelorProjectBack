@@ -108,11 +108,13 @@ async function getContests(params, reply) {
                 body: contests[i].description,
                 imageUrl: contests[i].contestPictureUrl,
                 registrationEnd: new Date(contests[i].registrationDeadline).getTime(),
+                status: contests[i].status,
                 nextContestStart: null,
                 nextContestDuration: null, //todo
                 subjects: [],
                 registeredCount: null,
-                isRegistered: true
+                isRegistered: true,
+
             });
             if (!(contests[i].users.length > 0)) {
                 // console.log(contests[i].title + 'REGISTERED');
@@ -679,11 +681,11 @@ module.exports = {
         let contestId = request.query.contestId;
 
         Contest.findOne({
-            where : {
-                id : contestId
+            where: {
+                id: contestId
             },
-            include : {
-                model : Round
+            include: {
+                model: Round
             }
         }).then(function (contest) {
 
@@ -722,23 +724,24 @@ module.exports = {
         // contest: contest.toString(),
         //     round: round.toString()
 
-        let contest = parseInt(request.query.contest);
+        // let contest = parseInt(request.query.contest);
         let round = parseInt(request.query.round);
 
 
         Round.findOne({
             where: {
-                contestId: contest,
-                roundNo: round
+                // contestId: contest,
+                id: round
             }
         }).then(function (round) {
             if (!round) {
                 //return err
-                return reply.code(500).send('Round does not exist!');
+                return reply.code(404).send('Round does not exist!');
             }
             Question.findAll({
                 where: {
-                    roundId: round.id
+                    roundId: round.id,
+                    status: {[Op.not]: config.STATUS_DELETED}
                 },
                 include: [
                     {model: QuestionAnswer},
@@ -777,7 +780,6 @@ module.exports = {
             //     type: 'MULTIPLE CHOICE',
             //     correctAnswer: [2],
             //
-
 
         }).catch(function (error) {
             console.log('error in catch', error);
@@ -868,7 +870,7 @@ module.exports = {
         });
     },
 
-    addRound : (request, reply) => {
+    addRound: (request, reply) => {
         // id: 1231,
         //     password: '',
         //     isClosed: false,
@@ -907,7 +909,6 @@ module.exports = {
     },
 
 
-
     saveRounds: (request, reply) => {
         // id: number;
         // isClosed: boolean;
@@ -918,7 +919,7 @@ module.exports = {
         // startTime: number;
         // password: '';
 
-        let rounds  = request.body;
+        let rounds = request.body;
 
         let toCreate = [];
         let toUpdate = [];
@@ -928,26 +929,26 @@ module.exports = {
                 isOpen: !rounds[i].isClosed,
             };
 
-            if(rounds[i].placeToPass){
-                roundModel.passingPlace= rounds[i].placeToPass;
+            if (rounds[i].placeToPass) {
+                roundModel.passingPlace = rounds[i].placeToPass;
             }
-            if(rounds[i].pointsToPass){
-                roundModel.passingScore= rounds[i].pointsToPass;
+            if (rounds[i].pointsToPass) {
+                roundModel.passingScore = rounds[i].pointsToPass;
             }
-            if(rounds[i].startTime){
-                roundModel.startTime= rounds[i].startTime;
-            }
-
-            if(rounds[i].duration){
-                roundModel.duration= rounds[i].duration;
+            if (rounds[i].startTime) {
+                roundModel.startTime = rounds[i].startTime;
             }
 
-            if(rounds[i].strictMode){
-                roundModel.strictMode= rounds[i].strictMode;
+            if (rounds[i].duration) {
+                roundModel.duration = rounds[i].duration;
             }
 
-            if(rounds[i].password){
-                roundModel.password= rounds[i].password;
+            if (rounds[i].strictMode) {
+                roundModel.strictMode = rounds[i].strictMode;
+            }
+
+            if (rounds[i].password) {
+                roundModel.password = rounds[i].password;
             }
 
             //if update
@@ -955,25 +956,18 @@ module.exports = {
                 roundModel.id = rounds[i].id;
                 roundModel.status = rounds[i].status;
                 toUpdate.push(roundModel);
-            }else {
+            } else {
                 toCreate.push(roundModel);
 
             }
         }
 
-
-        let promises  = [Round.bulkCreate(toCreate )];
+        let promises = [Round.bulkCreate(toCreate)];
         for (let i = 0; i < toUpdate.length; i++) {
-           let prom =  Round.update(toUpdate[i], {where: {id: toUpdate[i].id}});
-           promises.push(prom);
+            let prom = Round.update(toUpdate[i], {where: {id: toUpdate[i].id}});
+            promises.push(prom);
         }
 
-        // .then(function (rounds) {
-        //     reply.send();
-        // }).catch(function (error) {
-        //     console.log('error in catch', error);
-        //     reply.code(500).send({message: 'There was an error!'});
-        // });
         Promise.all(promises).then(() => {
             // access results here, p2 is undefined if the condition did not hold
             reply.code(200).send();
@@ -981,6 +975,76 @@ module.exports = {
             console.log('error in catch', error);
             reply.code(500).send({message: 'There was an error!'});
         });
+
+    },
+
+    getUpcomingTournament: (request, reply) => {
+        let userId = request.user.dataValues.id;
+        Contest.findOne({
+            order: [['rounds', 'startTime']],
+            attributes: [],
+            where: {
+                status: [
+                    config.STATUS_REGISTRATION_ON,
+                    config.STATUS_REGISTRATION_OVER,
+                    config.STATUS_ONGOING]
+            },
+            include: [
+                {
+                    attributes: ['startTime', 'contestId'],
+                    model: Round,
+                    required: true,
+                    where: {
+                        // startTime: {[Op.gt]: Sequelize.fn('NOW')}
+                        startTime: {[Op.gt]: new Date()}
+
+                    }
+                },
+                {
+                    attributes: [],
+                    model: User,
+                    required: true,
+                    through: ContestRegisteredUser,
+                    where: {
+                        id: userId
+                    }
+                },
+            ]
+
+        }).then(function (contest) {
+
+            if (contest){
+                reply.send({
+                    contestId : contest.rounds[0].contestId,
+                    timestamp : new Date(contest.rounds[0].startTime).getTime()
+                });
+            }else{
+                reply.send({
+                    contestId : -1,
+                    timestamp : -1
+                });
+            }
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+
+
+
+    },
+
+    updateQuestions: (request, reply) => {
+        let questions = request.body.questions;
+        let roundId = request.body.roundId;
+        Question.update({status : config.STATUS_DELETED}, {where: {roundId : roundId}}).then(function () {
+            reply.send();
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+
+
+
 
     }
 };

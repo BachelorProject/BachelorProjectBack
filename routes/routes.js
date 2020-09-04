@@ -141,6 +141,13 @@ module.exports = function (fastify, opts, next) {
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: contestController.getContestRounds
     });
+    fastify.route({
+        method: 'GET',
+        url: '/api/upcoming_tournament',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getUpcomingTournament
+    });
+
 
     fastify.route({
         method: 'POST',
@@ -226,6 +233,14 @@ module.exports = function (fastify, opts, next) {
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler:  contestController.getLeaderBoard
     });
+    // fastify.route({
+    //     method: 'GET',
+    //     url: '/api/update_questions',
+    //     preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+    //     handler:  contestController.updateQuestions
+    // });
+
+
     next();
 
 };
