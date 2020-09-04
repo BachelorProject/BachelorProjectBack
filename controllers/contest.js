@@ -220,8 +220,9 @@ async function getContests(params, reply) {
                             contestsInfo[i].nextContestDuration = roundsDict[contestsInfo[i].id].duration;
                             contestsInfo[i].nextContestStart = new Date(roundsDict[contestsInfo[i].id].startTime).getTime();
                         } else {
-                            contestsInfo[i].nextContestDuration = null;
-                            contestsInfo[i].nextContestStart = null;
+                            contestsInfo[i].nextContestDuration = 120;
+                            contestsInfo[i].nextContestDuration = 120;
+                            contestsInfo[i].nextContestStart = new Date() + 1;
                         }
                     }
 
@@ -520,11 +521,11 @@ module.exports = {
                     for (let i = 0; i < userResults.length; i++) {
                         results.push({
                             rank: from + i + 1, // ???
-                            username: userResults[i].user.userName,
+                            username: userResults[i].user.username,
                             imageUrl: userResults[i].user.profilePictureUrl,
                             score: userResults[i].score,
                             userId: userResults[i].userId,
-                            time: (userResults[i].end_time - startTime) / 1000 // in seconds
+                            time:   1200 + i*100// (userResults[i].end_time - startTime) / 1000 // in seconds
                         });
                     }
 
@@ -555,7 +556,7 @@ module.exports = {
         // rounds: ContestRound[];
 
         if (id === -1) {
-            Contest.create({createUser: userId}).then(function (contest) {
+            Contest.create({createUserId: userId}).then(function (contest) {
                 let contestInfo = {
                     id: contest.id,
                     title: contest.title,
@@ -839,8 +840,8 @@ module.exports = {
         Contest.findOne({
             where: {
                 id: contestId,
-                status: config.STATUS_REGISTRATION_ON,
-                registrationDeadline: {[Op.gt]: new Date()}
+                // status: config.STATUS_REGISTRATION_ON,
+                // registrationDeadline: {[Op.gt]: new Date()}
             }
         }).then(function (contest) {
             if (contest) {
@@ -1043,8 +1044,19 @@ module.exports = {
             reply.code(500).send({message: 'There was an error!'});
         });
 
+    },
+
+    // get_user_metadata
+//     userId: number;
+// profileImageUrl: string;
+    getUserMetaData : (request, reply) =>{
+        reply.send({userId: request.user.dataValues.id,
+            profileImageUrl: request.user.dataValues.profilePictureUrl})
+
+    },
 
 
-
+    submitResult: (request, reply) =>{
+        reply.send();
     }
 };

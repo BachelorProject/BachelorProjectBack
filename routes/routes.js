@@ -240,6 +240,20 @@ module.exports = function (fastify, opts, next) {
     //     handler:  contestController.updateQuestions
     // });
 
+    fastify.route({
+        method: 'GET',
+        url: '/api/get_user_metadata',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler:  contestController.getUserMetaData
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/submit_result',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler:  contestController.submitResult
+    });
+
 
     next();
 
