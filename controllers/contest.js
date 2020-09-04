@@ -57,7 +57,7 @@ async function getContests(params, reply) {
     } else if (registrationIsOn === 'false') {
         if (createdByMe === 'true') {
             options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED, config.STATUS_UNPUBLISHED];
-        }else{
+        } else {
             options.where.status = [config.STATUS_REGISTRATION_OVER, config.STATUS_ONGOING, config.STATUS_COMPLETED];
         }
         options.order = [['registrationDeadline', 'DESC']];
@@ -81,7 +81,7 @@ async function getContests(params, reply) {
                 id: userId
             }
         })
-    }else{
+    } else {
         options.include.push({
             model: User,
             required: false,
@@ -114,9 +114,9 @@ async function getContests(params, reply) {
                 registeredCount: null,
                 isRegistered: true
             });
-            if(!(contests[i].users.length > 0)){
+            if (!(contests[i].users.length > 0)) {
                 // console.log(contests[i].title + 'REGISTERED');
-                contestsInfo[contestsInfo.length -1].isRegistered = false;
+                contestsInfo[contestsInfo.length - 1].isRegistered = false;
             }
             contestIds.push(contests[i].id)
         }
@@ -172,12 +172,12 @@ async function getContests(params, reply) {
                         if (!roundsDict[contestId]) {
                             roundsDict[contestId] = {'A': {}, 'C': {}};
                         }
-                        if (rounds[i].status === config.STATUS_ACTIVE){
+                        if (rounds[i].status === config.STATUS_ACTIVE) {
                             roundsDict[contestId]['A'][rounds[i].roundNo] = {
                                 duration: rounds[i].duration,
                                 startTime: rounds[i].startTime,
                             }
-                        }else{
+                        } else {
                             roundsDict[contestId]['C'][rounds[i].roundNo] = {
                                 duration: rounds[i].duration,
                                 startTime: rounds[i].startTime,
@@ -291,40 +291,15 @@ module.exports = {
             //
             ContestSubject.destroy({where: {contestId: contestInfo.id}}).then(function () {
 
-                //
-                // var p1 = functionA();
-                // var p2 = condition ? functionB() : Promise.resolve(); // or empty promise
-                // Promise.all([p1, p2]).then(results => {
-                //     // access results here, p2 is undefined if the condition did not hold
-                // });
-
                 let records = [];
                 for (let i = 0; i < contestInfo.subjectIds.length; i++) {
                     records.push({contestId: contestInfo.id, subjectId: contestInfo.subjectIds[i]});
                 }
 
-                let roundModels = [];
-                for (let i = 0; i < contestInfo.rounds.length; i++) {
-                    let roundModel = {
-                        isOpen: contestInfo.rounds[i].isOpen,
-                        strictMode: contestInfo.rounds[i].strictMode,
-                        duration: contestInfo.rounds[i].duration,
-                        passingPlace: contestInfo.rounds[i].placeToPass,
-                        passingScore: contestInfo.rounds[i].pointsToPass,
-                        startTime: contestInfo.rounds[i].startTime
-                    };
-
-                    //if update
-                    if (contestInfo.rounds[i].id !== -1) {
-                        roundModel.id = contestInfo.rounds[i].id;
-                        roundModel.status = contestInfo.rounds[i].status
-                    }
-                    roundModels.push(roundModel);
-                }
 
                 let subjectsPromise = contestInfo.subjectIds.length > 0 ? ContestSubject.bulkCreate(records) : Promise.resolve();
-                let roundsPromise = contestInfo.rounds.length > 0 ? Round.bulkCreate(roundModels, {updateOnDuplicate: ['id']}) : Promise.resolve();
 
+                let roundsPromise = Promise.resolve();
                 Promise.all([subjectsPromise, roundsPromise]).then(() => {
                     // access results here, p2 is undefined if the condition did not hold
                     reply.code(200).send();
@@ -587,7 +562,7 @@ module.exports = {
                     registrationEnd: contest.registrationDeadline,
                     createUser: contest.createUserId,
                     status: contest.status,
-                    rounds: [],
+                    // rounds: [],
                     subjectIds: [],
                     isRegistered: false
                 };
@@ -607,15 +582,15 @@ module.exports = {
                         model: Subject,
                         attributes: ['id']
                     },
-                    {
-                        model: Round,
-                        // attributes: ['roundNo', 'strictMode', 'isOpen', 'duration', ['passingPlace', 'placeToPass'], ['passingScore', 'pointsToPass'], 'status', 'startTime'],
-                        order: ['roundNo'],
-                        // include: {model: Question,
-                        //     attributes: [['id', 'questionId'], [Sequelize.fn('COUNT', 'id'), 'questionCount']],
-                        //     group: ['roundId']
-                        // },
-                    },
+                    // {
+                    //     model: Round,
+                    //     // attributes: ['roundNo', 'strictMode', 'isOpen', 'duration', ['passingPlace', 'placeToPass'], ['passingScore', 'pointsToPass'], 'status', 'startTime'],
+                    //     order: ['roundNo'],
+                    //     // include: {model: Question,
+                    //     //     attributes: [['id', 'questionId'], [Sequelize.fn('COUNT', 'id'), 'questionCount']],
+                    //     //     group: ['roundId']
+                    //     // },
+                    // },
                     {
                         model: User,
                         required: false,
@@ -642,7 +617,7 @@ module.exports = {
                             isRegistered: true
                         };
 
-                        if(!(contest.users.length > 0)){
+                        if (!(contest.users.length > 0)) {
                             contestInfo.isRegistered = false;
                         }
 
@@ -655,39 +630,40 @@ module.exports = {
                             subjectIds.push(contest.subjects[i].id);
                         }
                         contestInfo.subjectIds = subjectIds;
-
-                        let rounds = [];
-                        for (let i = 0; i < contest.rounds.length; i++) {
-
-                            let round = {
-                                id: contest.rounds[i].id,
-                                roundNo: contest.rounds[i].roundNo,
-                                strictMode: contest.rounds[i].strictMode,
-                                isOpen: contest.rounds[i].isOpen,
-                                duration: contest.rounds[i].duration,
-                                placeToPass: contest.rounds[i].passingPlace,
-                                pointsToPass: contest.rounds[i].passingScore,
-                                status: contest.rounds[i].status,
-                                startTime: contest.rounds[i].startTime,
-                                questions: contest.rounds[i].questions
-                            };
-
-                            if (contest.rounds[i].startTime) {
-                                round.startTime = new Date(contest.rounds[i].startTime).getTime();
-                            }
-
-                            if (round.placeToPass === null) {
-                                round.placeToPass = -1;
-                            }
-
-                            if (round.pointsToPass === null) {
-                                round.pointsToPass = -1;
-                            }
-
-                            rounds.push(round);
-                        }
-
-                        contestInfo.rounds = rounds;
+                        //
+                        // let rounds = [];
+                        // for (let i = 0; i < contest.rounds.length; i++) {
+                        //
+                        //     let round = {
+                        //         id: contest.rounds[i].id,
+                        //         roundNo: contest.rounds[i].roundNo,
+                        //         strictMode: contest.rounds[i].strictMode,
+                        //         isOpen: contest.rounds[i].isOpen,
+                        //         duration: contest.rounds[i].duration,
+                        //         placeToPass: contest.rounds[i].passingPlace,
+                        //         pointsToPass: contest.rounds[i].passingScore,
+                        //         status: contest.rounds[i].status,
+                        //         startTime: contest.rounds[i].startTime,
+                        //         questions: contest.rounds[i].questions,
+                        //         password: contest.rounds[i].password,
+                        //     };
+                        //
+                        //     if (contest.rounds[i].startTime) {
+                        //         round.startTime = new Date(contest.rounds[i].startTime).getTime();
+                        //     }
+                        //
+                        //     if (round.placeToPass === null) {
+                        //         round.placeToPass = -1;
+                        //     }
+                        //
+                        //     if (round.pointsToPass === null) {
+                        //         round.pointsToPass = -1;
+                        //     }
+                        //
+                        //     rounds.push(round);
+                        // }
+                        //
+                        // contestInfo.rounds = rounds;
                         reply.code(200).send(contestInfo);
                     }
                 }
@@ -698,6 +674,49 @@ module.exports = {
         }
     },
 
+    getContestRounds: (request, reply) => {
+        let userId = request.user.dataValues.id;
+        let contestId = request.query.contestId;
+
+        Contest.findOne({
+            where : {
+                id : contestId
+            },
+            include : {
+                model : Round
+            }
+        }).then(function (contest) {
+
+            let rounds = [];
+            for (let i = 0; i < contest.rounds.length; i++) {
+
+                let round = {
+                    id: contest.rounds[i].id,
+                    roundNo: contest.rounds[i].roundNo,
+                    strictMode: contest.rounds[i].strictMode,
+                    isClosed: !contest.rounds[i].isOpen,
+                    duration: contest.rounds[i].duration,
+                    placeToPass: contest.rounds[i].passingPlace,
+                    pointsToPass: contest.rounds[i].passingScore,
+                    status: contest.rounds[i].status,
+                    startTime: contest.rounds[i].startTime,
+                    questions: contest.rounds[i].questions,
+                    password: contest.rounds[i].password,
+                };
+
+                if (contest.rounds[i].startTime) {
+                    round.startTime = new Date(contest.rounds[i].startTime).getTime();
+                }
+
+                rounds.push(round);
+            }
+
+            reply.send(rounds);
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+    },
 
     getQuestions: async (request, reply) => {
         // contest: contest.toString(),
@@ -790,14 +809,14 @@ module.exports = {
             ]
         }).then(function (contests) {
             let contestsInfo = [];
-            for(let i = 0; i < contests.length; i++ ){
+            for (let i = 0; i < contests.length; i++) {
                 let contestInfo = {
                     contestId: contests[i].id,
                     title: contests[i].title,
                     imageUrl: contests[i].contestPictureUrl
                 };
                 let subjectIds = [];
-                for (let j = 0; j < contests[i].subjects.length; j++){
+                for (let j = 0; j < contests[i].subjects.length; j++) {
                     subjectIds.push(contests[i].subjects[j].id);
                 }
                 contestInfo.subjectIds = subjectIds;
@@ -809,6 +828,159 @@ module.exports = {
             reply.code(500).send({message: 'There was an error!'});
         });
 
-    }
+    },
 
+    registerToContest: (request, reply) => {
+        let userId = request.user.dataValues.id;
+        let contestId = request.body.contestId;
+
+        Contest.findOne({
+            where: {
+                id: contestId,
+                status: config.STATUS_REGISTRATION_ON,
+                registrationDeadline: {[Op.gt]: new Date()}
+            }
+        }).then(function (contest) {
+            if (contest) {
+                ContestRegisteredUser.findOrCreate({
+                    where: {
+                        userId: userId,
+                        contestId: contestId
+                    },
+                    defaults: {
+                        userId: userId,
+                        contestId: contestId
+                    }
+                }).then(function (res) {
+                    reply.send();
+
+                }).catch(function (error) {
+                    console.log('error in catch', error);
+                    reply.code(500).send({message: 'There was an error!'});
+                });
+                // , {updateOnDuplicate: ['userId', 'contestId']}
+            } else {
+                reply.code(404).send('Registration is not possible!');
+            }
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+    },
+
+    addRound : (request, reply) => {
+        // id: 1231,
+        //     password: '',
+        //     isClosed: false,
+        //     duration: null,
+        //     placeToPass: null,
+        //     pointsToPass: null,
+        //     status: 'ACTIVE', //   'ACTIVE', 'ONGOING', 'CANCELLED', 'COMPLETED'
+        //     startTime: null
+        let contestId = request.body.contestId;
+
+        Round.create({
+            contestId: contestId
+        }).then(function (round) {
+            let roundInfo = {
+                id: round.id,
+                // roundNo: round.roundNo,
+                // strictMode: round.strictMode,
+                isClosed: !round.isOpen,
+                duration: round.duration,
+                placeToPass: round.passingPlace,
+                pointsToPass: round.passingScore,
+                status: round.status,
+                startTime: round.startTime,
+                password: round.password,
+            };
+
+            if (round.startTime) {
+                roundInfo.startTime = new Date(round.startTime).getTime();
+            }
+            reply.send(roundInfo);
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+
+    },
+
+
+
+    saveRounds: (request, reply) => {
+        // id: number;
+        // isClosed: boolean;
+        // duration: number;
+        // placeToPass: number; // -1 means this is not passing criteria
+        // pointsToPass: number; // -1 means this is not passing criteria
+        // status: string; //   'ACTIVE', 'ONGOING', 'CANCELLED', 'COMPLETED'
+        // startTime: number;
+        // password: '';
+
+        let rounds  = request.body;
+
+        let toCreate = [];
+        let toUpdate = [];
+
+        for (let i = 0; i < rounds.length; i++) {
+            let roundModel = {
+                isOpen: !rounds[i].isClosed,
+            };
+
+            if(rounds[i].placeToPass){
+                roundModel.passingPlace= rounds[i].placeToPass;
+            }
+            if(rounds[i].pointsToPass){
+                roundModel.passingScore= rounds[i].pointsToPass;
+            }
+            if(rounds[i].startTime){
+                roundModel.startTime= rounds[i].startTime;
+            }
+
+            if(rounds[i].duration){
+                roundModel.duration= rounds[i].duration;
+            }
+
+            if(rounds[i].strictMode){
+                roundModel.strictMode= rounds[i].strictMode;
+            }
+
+            if(rounds[i].password){
+                roundModel.password= rounds[i].password;
+            }
+
+            //if update
+            if (rounds[i].id !== -1) {
+                roundModel.id = rounds[i].id;
+                roundModel.status = rounds[i].status;
+                toUpdate.push(roundModel);
+            }else {
+                toCreate.push(roundModel);
+
+            }
+        }
+
+
+        let promises  = [Round.bulkCreate(toCreate )];
+        for (let i = 0; i < toUpdate.length; i++) {
+           let prom =  Round.update(toUpdate[i], {where: {id: toUpdate[i].id}});
+           promises.push(prom);
+        }
+
+        // .then(function (rounds) {
+        //     reply.send();
+        // }).catch(function (error) {
+        //     console.log('error in catch', error);
+        //     reply.code(500).send({message: 'There was an error!'});
+        // });
+        Promise.all(promises).then(() => {
+            // access results here, p2 is undefined if the condition did not hold
+            reply.code(200).send();
+        }).catch(function (error) {
+            console.log('error in catch', error);
+            reply.code(500).send({message: 'There was an error!'});
+        });
+
+    }
 };

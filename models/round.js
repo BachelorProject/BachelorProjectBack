@@ -44,6 +44,10 @@ let modelDefinition = {
         type: Sequelize.INTEGER
     },
 
+    password: {
+        type: Sequelize.STRING
+    },
+
     status: {
         type: Sequelize.STRING,
         unique: false,

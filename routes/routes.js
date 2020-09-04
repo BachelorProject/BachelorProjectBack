@@ -137,6 +137,28 @@ module.exports = function (fastify, opts, next) {
 
     fastify.route({
         method: 'GET',
+        url: '/api/contest_rounds',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.getContestRounds
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/add_round',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.addRound
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/save_rounds',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.saveRounds
+    });
+
+
+    fastify.route({
+        method: 'GET',
         url: '/api/tournament/registered_list',
         preHandler: fastify.auth([fastify.verifyJWTAndUser]),
         handler: contestController.getRegisteredTournamentList
@@ -182,6 +204,13 @@ module.exports = function (fastify, opts, next) {
         url: '/api/set_contest_picture',
         preHandler: [fastify.auth([fastify.verifyJWTAndUser]) , fileController.upload.single('avatar')],
         handler:  contestController.setContestPicture
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/api/register_contest',
+        preHandler: fastify.auth([fastify.verifyJWTAndUser]),
+        handler: contestController.registerToContest
     });
 
     fastify.route({
