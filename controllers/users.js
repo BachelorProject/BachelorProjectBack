@@ -304,8 +304,10 @@ module.exports = {
     },
 
     getUserInfo: async (request, reply) => {
-        let userId = request.query.userId;
-
+        let userId = parseInt(request.query.userId);
+        if (userId === -1){
+            userId = request.user.dataValues.id;
+        }
 
         // UserInformation {
         //     userId: number;
