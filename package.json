@@ -6,7 +6,7 @@
   "dependencies": {
     "bcrypt": "^4.0.1",
     "dotenv": "^8.2.0",
-    "fastify": "^3.0.0",
+    "fastify": "^3.29.4",
     "fastify-auth": "^0.7.2",
     "fastify-cors": "^3.0.3",
     "fastify-jwt": "^1.4.0",
